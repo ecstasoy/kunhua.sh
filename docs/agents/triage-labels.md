@@ -20,7 +20,6 @@ Defaults are used unchanged — this is a new repo with no pre-existing label vo
 renaming would only add a layer to remember. GitHub ships `wontfix` by default; the other four do not yet
 exist in the tracker and must be created on first use (`gh label create <name>`).
 
-`ready-for-agent` carries real weight here: the project runs on unpredictable weekly hours, so "I have no
-time this week, let an agent take it" is expected to be the common path rather than the exception. An issue
-only earns this label if an agent could pick it up with **no** human context — that bar is what makes the
-label worth having.
+`ready-for-agent` is expected to be the common path rather than the exception, given how the project is
+scheduled. An issue only earns the label if an agent could pick it up with **no** human context — that bar
+is what makes the label worth having.
