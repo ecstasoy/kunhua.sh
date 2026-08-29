@@ -21,10 +21,6 @@ Create a GitHub issue.
 
 Run `gh issue view <number> --comments`.
 
-## Prerequisite not yet met
+## Repository
 
-As of this file's creation the repo has **no git remote** and no GitHub repository exists. Every command
-above will fail until one is created and pushed. A GitHub repo is required regardless of issue tracking —
-the deploy pipeline is GitHub Actions.
-
-Delete this section once the remote exists.
+`ecstasoy/kunhua.sh` on GitHub. `gh` infers it from `git remote -v` when run inside the clone.

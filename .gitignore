@@ -2,3 +2,7 @@
 docs/*
 !docs/agents/
 !docs/adr/
+
+# vendored agent skills — restore from skills-lock.json
+.agents/skills/
+.claude/skills/
