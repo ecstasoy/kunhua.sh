@@ -1,2 +1,4 @@
 .superpowers/
-docs/
+docs/*
+!docs/agents/
+!docs/adr/

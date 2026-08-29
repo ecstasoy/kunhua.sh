@@ -51,3 +51,17 @@ None yet — nothing is scaffolded. Once each half exists, record here:
 
 - `web/`: dev server, build, lint, and the single-test invocation for whichever runner is chosen.
 - `api/`: `go build ./...`, `go test ./...`, single test via `go test ./path -run TestName`.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues via the `gh` CLI — note the remote does not exist yet. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles, unrenamed (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` and one `docs/adr/` at the root. See `docs/agents/domain.md`.
