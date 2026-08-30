@@ -6,6 +6,8 @@
 set -euo pipefail
 
 DEPLOY_USER=deploy
+CI_USER=ci
+SITE_GROUP=web
 SITE_ROOT=/srv/kunhua.sh
 
 # --- deploy user -------------------------------------------------------------
@@ -32,6 +34,18 @@ fi
 # passwordless sudo, so CI can run the release without a TTY
 echo "$DEPLOY_USER ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/90-$DEPLOY_USER"
 chmod 440 "/etc/sudoers.d/90-$DEPLOY_USER"
+
+# -- ci user: GitHub Actions runner ---------------------------------------------------
+
+if ! id "$CI_USER" &>/dev/null; then
+  adduser --disabled-password --gecos "" --shell /bin/bash "$CI_USER"
+fi
+install -d -m 700 -o "$CI_USER" -g "$CI_USER" "/home/$CI_USER/.ssh"
+install -m 600 -o "&CI_USER" -g "$CI_USER" /root/.ssh/authorized_keys "/home/$CI_USER/.ssh/authorized_keys"
+
+getent group "$SITE_GROUP" >/dev/null || groupadd "$SITE_GROUP"
+usermod -aG "$SITE_GROUP" "$DEPLOY_USER"
+usermod -aG "$SITE_GROUP" "$CI_USER"
 
 # --- sshd --------------------------------------------------------------------
 
@@ -83,7 +97,28 @@ dpkg-reconfigure -f noninteractive unattended-upgrades
 # data/ and backup/ belong to the next phase; creating them now keeps the
 # layout in one place.
 
-install -d -o "$DEPLOY_USER" -g "$DEPLOY_USER" \
+install -d -o "$DEPLOY_USER" -g "$SITE_GROUP" -m 2775 \
   "$SITE_ROOT" "$SITE_ROOT/releases" "$SITE_ROOT/data" "$SITE_ROOT/backup"
+chgrp -R "$SITE_GROUP" "$SITE_ROOT"
+chmod -R g+w "$SITE_ROOT"
+
+# -- caddy --------------------------------------------------------------------
+
+if ! command -v caddy &>/dev/null; then
+  apt-get install -y debian-keyring debian -archive-keyring apt-transport-https curl
+  curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/gpg.key \
+    | gpg --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt \
+    > /etc/apt/sources.list.d/caddy-stable.list
+  apt-get update -y
+  apt-get install -y caddy
+fi
+
+CADDYFILE="$(dirname "$0")/Caddyfile"
+if [ -f "$CADDYFILE" ]; then
+  install -m 644 "$CADDYFILE" /etc/caddy/Caddyfile
+  caddy validate --config /etc/caddy/Caddyfile
+  systemctl reload caddy || systemctl restart caddy
+fi
 
 echo "bootstrap done"
