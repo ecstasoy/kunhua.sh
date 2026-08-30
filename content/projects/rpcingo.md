@@ -3,7 +3,7 @@ name: RPCinGo
 summary: 基于 TCP 的 demo 级 RPC 框架，支持服务注册发现、负载均衡、连接复用等核心能力。
 stack: Go · TCP · etcd · Protobuf
 code: https://github.com/ecstasoy/RPCinGo
-order: 2
+order: 3
 ---
 
 - **协议与编解码设计**：设计自定义二进制协议（固定长度 Header + 可变 Body），支持 JSON / Protobuf 编解码切换，降低序列化开销

@@ -3,7 +3,7 @@ name: FUSE File System
 summary: 用户态实现的类 Unix 文件系统，读写完整。
 stack: C · FUSE · Python
 code: https://github.com/ecstasoy/FUSE-File-System
-order: 5
+order: 6
 ---
 
 - **盘上格式设计**：自定义 4096 字节块布局，超级块以 magic 校验；inode 占满一整个块，uid/gid/mode/ctime/mtime/size 之后接 1019 个直接块指针；目录项固定 32 字节，含 1 位有效标志、31 位 inode 号与 28 字节文件名

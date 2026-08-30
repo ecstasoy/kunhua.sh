@@ -1,6 +1,6 @@
 ---
-name: "LGTM"
-summary: "An assistant that reviews GitHub pull requests, live. It reads CI status and the repository's own convention docs, not just the diff."
+name: LGTM
+summary: An assistant that reviews GitHub pull requests, live. It reads CI status and the repository's own convention docs, not just the diff. Repo-level RAG is achieved.
 ---
 
 - **Building the context**: handing a model only the diff produces comments detached from the project, so a review starts by pulling the PR's metadata, its CI status, and the repository's own convention documents
@@ -9,4 +9,4 @@ summary: "An assistant that reviews GitHub pull requests, live. It reads CI stat
 - **GitHub App integration**: OAuth for sign-in, a webhook that reviews new pull requests and pushes automatically, and the results written back as inline suggestions
 - **Caching and idempotency**: re-triggering the same PR would otherwise mean paying for the same model calls, so results are persisted in SQLite or Postgres behind a Redis cache, and webhook deliveries are made idempotent
 - **Internationalization**: the interface language and the language the model writes in have to agree, so one self-built locale layer drives both. PR comments stay in English regardless, so a repository's maintainers only ever read one language
-- **Deployment**: the frontend on Vercel, the Go backend containerized on Fly.io, persistence switchable between SQLite and Postgres. 15,300 lines of Go across 102 files, and 62 TypeScript files on the frontend
+- **Deployment**: the frontend on Vercel, the Go backend containerized on Fly.io, persistence switchable between SQLite and Postgres. 

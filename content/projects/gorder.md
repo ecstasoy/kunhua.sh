@@ -3,7 +3,7 @@ name: Gorder
 summary: 基于 Go 的 demo 级订单系统，将逻辑拆分为四个服务，支持从下单到履约的完整流程。
 stack: Go · gRPC · RabbitMQ · MySQL · MongoDB · Redis
 code: https://github.com/ecstasoy/gorder
-order: 3
+order: 4
 ---
 
 - **服务拆分与通信设计**：订单流程横跨下单、库存、支付、处理订单多个业务域，为此拆分为四个服务，按实时性选择 gRPC 同步或 RabbitMQ 异步通信

@@ -3,7 +3,7 @@ name: BetterScrobbler
 summary: 运行于 macOS 的 Last.fm scrobbler，可记录任何来源的播放。
 stack: C++17 · Objective-C++ · Go · CGo · macOS MediaRemote
 code: https://github.com/ecstasoy/BetterScrobblerGo
-order: 6
+order: 2
 ---
 
 - **系统级采集**：macOS 没有可靠的系统级 scrobbler，Apple Music 不内置、旧插件方案已废弃，为此直接读取系统的 now-playing 状态，使 Spotify、Apple Music、YouTube 与浏览器中的播放都能记录，再通过可配置的解析规则跳过非音乐内容
