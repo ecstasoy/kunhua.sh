@@ -21,7 +21,8 @@ const cjkSerif = Noto_Serif_SC({ subsets: ['latin'], weight: ['400'], variable: 
 
 export const metadata: Metadata = {
   title: 'kunhua.sh',
-  description: '黄坤华的个人网站',
+  // description: written by the site owner, not generated. It is what a
+  // stranger reads in search results and link previews.
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
