@@ -47,10 +47,24 @@ These are decisions, not defaults — changing one has consequences documented i
 
 ## Commands
 
-None yet — nothing is scaffolded. Once each half exists, record here:
+Run from `web/`:
 
-- `web/`: dev server, build, lint, and the single-test invocation for whichever runner is chosen.
-- `api/`: `go build ./...`, `go test ./...`, single test via `go test ./path -run TestName`.
+- `npm run dev` — dev server on :3000
+- `npm run build` — static export into `web/out/`
+- `npm run preview` — serve the exported output, byte-for-byte what gets deployed
+
+`api/` is not scaffolded yet; record `go build ./...` and the single-test form here once it is.
+
+## Deploying
+
+Pushing to `main` deploys — CI builds, rsyncs to `releases/<sha>/` on the host, and swaps the
+`current` symlink. Nothing is done by hand.
+
+Rolling back is `ssh deploy@<host> 'bash /srv/kunhua.sh/release.sh <sha>'` — a symlink swap, no
+rebuild. The five most recent releases are kept.
+
+Two identities on the host: `deploy` is the human admin (has sudo), `ci` is what GitHub Actions
+uses and deliberately has none. Publishing needs no root.
 
 ## Agent skills
 
