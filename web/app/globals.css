@@ -238,3 +238,15 @@ a:hover {
   font-size: 11px;
   color: var(--faint);
 }
+
+/* A listed entry that has no version in the language being read. */
+.untranslated {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--faint);
+  margin: 4px 0 0;
+}
+.locale-switch {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+}

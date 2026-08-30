@@ -1,15 +1,17 @@
 import { getAllPosts } from '@/lib/posts';
 import { getAllProjects } from '@/lib/projects';
 import { HangingSection, HangingRow } from '@/components/HangingSection';
+import { Untranslated } from '@/components/Untranslated';
+import { DEFAULT_LOCALE, href, type Locale } from '@/lib/locale';
 
-export default function Home() {
-  const posts = getAllPosts().slice(0, 3);
-  const projects = getAllProjects().slice(0, 2);
+export function Home({ locale }: { locale: Locale }) {
+  const posts = getAllPosts(locale).slice(0, 3);
+  const projects = getAllProjects(locale).slice(0, 2);
 
   return (
     <div>
-      {/* The opening statement speaks in the owner's name, so it is written by
-          the owner and not generated. */}
+      {/* The opening lines speak in the owner's name and are shared by both
+          locales, so they are not translated. */}
       <p className="serif" style={{ fontSize: 17, lineHeight: 1.5, margin: 0 }}>
         Kunhua Huang
       </p>
@@ -21,13 +23,18 @@ export default function Home() {
         {posts.map((p) => (
           <HangingRow key={p.slug} rail={<time className="date" dateTime={p.published}>{p.publishedDate}</time>}>
             <div className="item-title">
-              <a href={`/posts/${p.slug}/`}>{p.title}</a>
+              {/* An untranslated entry links straight to the source: no
+                  English page is generated for it. */}
+              <a href={href(p.translated ? locale : DEFAULT_LOCALE, `/posts/${p.slug}/`)}>
+                {p.title}
+              </a>
             </div>
             <p className="item-excerpt">{p.excerpt}</p>
+            {!p.translated && <Untranslated slug={p.slug} kind="posts" />}
           </HangingRow>
         ))}
         <HangingRow>
-          <a href="/posts/" style={{ fontSize: 12.5, color: 'var(--faint)', borderBottomColor: 'var(--rule)' }}>
+          <a href={href(locale, '/posts/')} style={{ fontSize: 12.5, color: 'var(--faint)', borderBottomColor: 'var(--rule)' }}>
             All posts →
           </a>
         </HangingRow>
@@ -35,10 +42,15 @@ export default function Home() {
 
       <HangingSection label="Open source">
         <HangingRow>
+          {/* Shared by both locales, so it says what RIME is rather than what
+              was contributed — the link lands on the merged PRs themselves. */}
           <div className="item-title">
             <a href="https://github.com/pulls?q=is%3Apr+author%3Aecstasoy+is%3Amerged+org%3Arime">
-              RIME / Squirrel
+              RIME
             </a>
+            <span style={{ color: 'var(--soft)', fontWeight: 400 }}>
+              : an open-source input method engine
+            </span>
           </div>
         </HangingRow>
       </HangingSection>
@@ -47,14 +59,13 @@ export default function Home() {
         {projects.map((project) => (
           <HangingRow key={project.slug}>
             <div className="item-title">
-              <a href="/projects/">{project.name}</a>
+              <a href={href(locale, '/projects/')}>{project.name}</a>
             </div>
-            {/* Same file the projects page reads, so the summary lives once. */}
             <p className="item-excerpt">{project.summary}</p>
           </HangingRow>
         ))}
         <HangingRow>
-          <a href="/projects/" style={{ fontSize: 12.5, color: 'var(--faint)', borderBottomColor: 'var(--rule)' }}>
+          <a href={href(locale, '/projects/')} style={{ fontSize: 12.5, color: 'var(--faint)', borderBottomColor: 'var(--rule)' }}>
             All projects →
           </a>
         </HangingRow>

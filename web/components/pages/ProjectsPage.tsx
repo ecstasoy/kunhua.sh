@@ -1,5 +1,7 @@
 import { getAllProjects, type Project } from '@/lib/projects';
 import { HangingSection, HangingRow } from '@/components/HangingSection';
+import { Untranslated } from '@/components/Untranslated';
+import type { Locale } from '@/lib/locale';
 
 // Name left, stack right, one line spanning both columns — what a resume does,
 // and what a reader scanning a list expects. A tech list will not fit the rail.
@@ -22,16 +24,15 @@ function Head({ project }: { project: Project }) {
       </div>
       {/* The resume calls this 项目描述: one line before the bullets. */}
       <p className="hang-lede">{project.summary}</p>
+      {!project.translated && <Untranslated slug={project.slug} kind="projects" />}
     </>
   );
 }
 
-// Every project on one page: a hiring reader reads a page, not four.
-export default function Projects() {
-  const projects = getAllProjects();
+export function ProjectsPage({ locale }: { locale: Locale }) {
+  const projects = getAllProjects(locale);
   return (
     <div>
-      {/* Speaks in the owner's name — written by the owner. */}
       <p className="serif" style={{ fontSize: 17, lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
         这里那里
       </p>

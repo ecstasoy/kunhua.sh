@@ -130,3 +130,75 @@ test('every summary on the homepage comes verbatim from a project file', () => {
   }
 });
 
+// ── bilingual ──────────────────────────────────────────────────────────────
+
+const CONTENT = path.join(import.meta.dirname, '..', 'content');
+const mdIn = (dir) =>
+  fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.md')) : [];
+
+test('no orphan translation: every English file has a Chinese source', () => {
+  for (const kind of ['posts', 'projects']) {
+    const source = new Set(mdIn(path.join(CONTENT, kind)));
+    for (const f of mdIn(path.join(CONTENT, kind, 'en'))) {
+      assert.ok(source.has(f), `content/${kind}/en/${f} has no Chinese source`);
+    }
+  }
+});
+
+test('translations carry no ordering or dates of their own', () => {
+  // A translation is not a separate publication. Enforced at build time too;
+  // asserted here so the rule cannot quietly rot into a comment.
+  for (const kind of ['posts', 'projects']) {
+    for (const f of mdIn(path.join(CONTENT, kind, 'en'))) {
+      const head = fs.readFileSync(path.join(CONTENT, kind, 'en', f), 'utf8').split('\n---')[0];
+      for (const field of ['published', 'updated', 'order']) {
+        assert.doesNotMatch(head, new RegExp(`^${field}:`, 'm'), `${kind}/en/${f} sets ${field}`);
+      }
+    }
+  }
+});
+
+test('/en/ emits the same four pages as the root', () => {
+  for (const p of ['index.html', 'posts/index.html', 'projects/index.html', 'about/index.html']) {
+    assert.ok(fs.existsSync(path.join(OUT, 'en', p)), `missing /en/${p}`);
+  }
+});
+
+/** Turn a site path into the file the export should have produced. */
+const pageFor = (url) => path.join(OUT, url.replace(/^\//, '').replace(/\/$/, ''), 'index.html');
+
+function everyPage() {
+  const walk = (dir) =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory() ? walk(path.join(dir, e.name)) : e.name === 'index.html' ? [path.join(dir, e.name)] : [],
+    );
+  return walk(OUT).filter((f) => !f.includes(`${path.sep}_next${path.sep}`));
+}
+
+test('every language switch lands on a page that was generated', () => {
+  // This is the assertion that matters: the fallback it exercises only runs
+  // when a counterpart is missing, which is rare enough to stay green until
+  // the day it is not.
+  let checked = 0;
+  for (const file of everyPage()) {
+    const html = fs.readFileSync(file, 'utf8');
+    const m = html.match(/<a href="([^"]+)" class="locale-switch">/);
+    if (!m) continue;
+    checked++;
+    assert.ok(fs.existsSync(pageFor(m[1])), `${file}: switch points at missing ${m[1]}`);
+  }
+  assert.ok(checked > 0, 'no language switch found on any page');
+});
+
+test('every hreflang target exists', () => {
+  let checked = 0;
+  for (const file of everyPage()) {
+    const html = fs.readFileSync(file, 'utf8');
+    for (const [, url] of html.matchAll(/<link rel="alternate" hreflang="[^"]*" href="https:\/\/kunhua\.sh([^"]*)"/gi)) {
+      checked++;
+      assert.ok(fs.existsSync(pageFor(url)), `${file}: hreflang points at missing ${url}`);
+    }
+  }
+  assert.ok(checked > 0, 'no hreflang alternates found');
+});
+

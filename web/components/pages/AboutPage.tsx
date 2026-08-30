@@ -1,10 +1,9 @@
 import { Email } from '@/components/Email';
 import { HangingSection, HangingRow } from '@/components/HangingSection';
 
-export default function About() {
+export function AboutPage() {
   return (
     <div>
-      {/* Speaks in the owner's name — written by the owner. */}
       <p className="serif" style={{ fontSize: 17, lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
         Across the Great Wall we can reach every corner in the world
       </p>
