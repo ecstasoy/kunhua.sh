@@ -8,10 +8,10 @@ on:
       - 'content/**'
       - 'deploy/release.sh'
       - '.github/workflows/web.yml'
-    pull_request:
-      paths:
-        - 'web/**'
-        - 'content/**'
+  pull_request:
+    paths:
+      - 'web/**'
+      - 'content/**'
 
 jobs:
   build:
