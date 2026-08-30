@@ -1,4 +1,4 @@
-#! /use/bin/env bash
+#!/usr/bin/env bash
 # Point the live site at a release. Runs on the server, needs no root.
 #   ./release.sh <sha>
 
@@ -17,7 +17,9 @@ cd "$ROOT"
 ln -sfT "releases/$SHA" current.tmp
 mv -T current.tmp current
 
-# Keep the five most recent, but never delete what is currently being served
+# Keep the five most recent, but never delete what is currently being served —
+# a retention rule that can remove the live release is worse than none.
+CURRENT=$(basename "$(readlink -f current)")
 ls -1dt releases/*/ | tail -n +6 | while read -r d; do
   [ "$(basename "$d")" = "$CURRENT" ] && continue
   rm -rf "$d"
