@@ -33,6 +33,16 @@ export default function Home() {
         </HangingRow>
       </HangingSection>
 
+      <HangingSection label="Open source">
+        <HangingRow>
+          <div className="item-title">
+            <a href="https://github.com/pulls?q=is%3Apr+author%3Aecstasoy+is%3Amerged+org%3Arime">
+              RIME 输入法
+            </a>
+          </div>
+        </HangingRow>
+      </HangingSection>
+
       <HangingSection label="Projects">
         {projects.map((project) => (
           <HangingRow key={project.slug}>
