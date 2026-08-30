@@ -6,7 +6,7 @@ import { DEFAULT_LOCALE, href, type Locale } from '@/lib/locale';
 
 export function Home({ locale }: { locale: Locale }) {
   const posts = getAllPosts(locale).slice(0, 3);
-  const projects = getAllProjects(locale).slice(0, 2);
+  const projects = getAllProjects(locale).slice(0, 3);
 
   return (
     <div>
