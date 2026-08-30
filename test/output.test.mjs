@@ -84,12 +84,19 @@ test('emits exactly the posts that exist, and nothing else', () => {
   assert.deepEqual(emitted, source);
 });
 
-test('project headings become rail labels', () => {
+test('project headings become rail labels, never plain headings', () => {
   const html = read('projects/index.html');
-  // The rail is what makes this layout the site's own; a project whose
-  // sections rendered as ordinary headings would have quietly lost it.
-  assert.match(html, /<span class="rail-note">[^<]+<\/span>/);
+  const source = fs
+    .readdirSync(path.join(import.meta.dirname, '..', 'content', 'projects'))
+    .filter((f) => f.endsWith('.md'))
+    .map((f) => fs.readFileSync(path.join(import.meta.dirname, '..', 'content', 'projects', f), 'utf8'))
+    .join('');
+  // Sections are optional, so their absence is not a failure. What must never
+  // happen is one rendering as an ordinary heading: the rail is the layout.
   assert.doesNotMatch(html, /<h2[^>]*>/);
+  if (/^## /m.test(source)) {
+    assert.match(html, /<span class="rail-note">[^<]+<\/span>/);
+  }
 });
 
 test('the homepage and the projects page share one summary', () => {

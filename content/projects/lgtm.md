@@ -1,18 +1,16 @@
 ---
 name: LGTM
-summary: 自动审查 GitHub PR 的助手，线上可用。它组装的不只是 diff，还有 CI 状态和仓库自己的约定文档。
+summary: 自动审查 GitHub PR 的助手，已部署上线，可注册为 GitHub App 。除 diff 外还会读取 CI 状态与仓库自身的约定文档，已实现仓库级RAG。
 stack: Go · Gin · Next.js · SQLite/Postgres · Redis · SSE
-code: https://github.com/ecstasoy/PR-Review-Assistant
+code: https://github.com/ecstasoy/LGTM
 live: https://lgtm-alpha.vercel.app
 order: 1
 ---
 
-- 拉取一个 PR 的元数据、diff、CI 状态与仓库约定文档，分三阶段调用 LLM 产出变更摘要、风险清单、以及**锚定到具体文件行**的修改建议，并可回写到 PR
-- 每个阶段可以选用不同模型；输出是结构化的，不是一整块文本。自建 SSE 协议让摘要边生成边出现，风险和建议在各自阶段完成时更新
-- GitHub App：OAuth 登录，webhook 在新 PR 或 push 时自动审查；SQLite/Postgres 持久化配 Redis 缓存避免重复审查，webhook 做幂等
-- 端到端国际化：一套自建的 locale 层同时驱动界面文案和模型输出的语言，但 PR 评论固定用英文，让维护者只读一种语言
-- 后端 15,300 行 Go、102 个文件；前端 Vercel、Go 后端 Fly.io 容器化部署
-
-## 诚实的边界
-
-个人项目，alpha 阶段。审查质量取决于 prompt 和模型，会产生误报，主要在我自己的仓库上验证过。不是生产级 SaaS。
+- **上下文构建**：只把 diff 交给模型会得到脱离项目背景的评论，为此在审查前先拉取 PR 元数据、CI 状态与仓库自身的约定文档，一并作为上下文
+- **三阶段流水线**：单次调用产出的长文本难以定位与复用，为此拆成变更摘要、风险清单、修改建议三个阶段，每阶段可指定不同模型、可单独重试，输出为结构化数据并锚定到具体文件行
+- **流式返回**：完整审查耗时较长，前端空等体验差，为此自建 SSE 协议，摘要逐段推送，风险与建议在各自阶段完成时整体更新
+- **GitHub App 集成**：以 OAuth 登录，webhook 在新 PR 或 push 时自动触发审查，结果作为行内建议回写到 PR
+- **缓存与幂等**：同一 PR 重复触发会造成无谓的模型调用，为此以 SQLite/Postgres 持久化配 Redis 缓存，并对 webhook 做幂等处理
+- **国际化**：界面语言与模型输出语言需一致，为此自建 locale 层同时驱动两者；PR 评论固定英文，保证仓库维护者只读一种语言
+- **部署**：前端部署在 Vercel，Go 后端容器化跑在 Fly.io，持久层可在 SQLite 与 Postgres 间切换

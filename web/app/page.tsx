@@ -11,7 +11,7 @@ export default function Home() {
       {/* The opening statement speaks in the owner's name, so it is written by
           the owner and not generated. */}
       <p className="serif" style={{ fontSize: 17, lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
-        [opening statement]
+        Kunhua Huang
       </p>
 
       <HangingSection label="Writing">

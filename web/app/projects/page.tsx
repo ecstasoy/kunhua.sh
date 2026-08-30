@@ -1,26 +1,23 @@
 import { getAllProjects, type Project } from '@/lib/projects';
 import { HangingSection, HangingRow } from '@/components/HangingSection';
 
-// Name, stack and links in the rail — the shape a resume uses, which is what a
-// reader scanning a list expects. The prose beside it stays dense.
-function Rail({ project }: { project: Project }) {
+// Name left, stack right, one line spanning both columns — what a resume does,
+// and what a reader scanning a list expects. A tech list will not fit the rail.
+function Head({ project }: { project: Project }) {
   return (
     <>
-      <div style={{ fontSize: 13.5, color: 'var(--ink)' }}>{project.name}</div>
-      <div className="mono" style={{ fontSize: 10.5, color: 'var(--faint)', lineHeight: 1.5, marginTop: 3 }}>
+      <span className="name">{project.name}</span>
+      <span className="meta">
         {project.stack}
-      </div>
-      {(project.code || project.live) && (
-        <div className="mono" style={{ fontSize: 10.5, marginTop: 5 }}>
-          {project.live && (
-            <a href={project.live} style={{ borderBottomColor: 'var(--rule)' }}>live</a>
-          )}
-          {project.live && project.code && <span style={{ color: 'var(--faint)' }}> · </span>}
-          {project.code && (
-            <a href={project.code} style={{ borderBottomColor: 'var(--rule)' }}>code</a>
-          )}
-        </div>
-      )}
+        {(project.live || project.code) && ' · '}
+        {project.live && (
+          <a href={project.live} style={{ borderBottomColor: 'var(--rule)' }}>live</a>
+        )}
+        {project.live && project.code && ' · '}
+        {project.code && (
+          <a href={project.code} style={{ borderBottomColor: 'var(--rule)' }}>code</a>
+        )}
+      </span>
     </>
   );
 }
@@ -32,11 +29,11 @@ export default function Projects() {
     <div>
       {/* Speaks in the owner's name — written by the owner. */}
       <p className="serif" style={{ fontSize: 17, lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
-        [placeholder]
+        这里那里
       </p>
 
       {projects.map((project) => (
-        <HangingSection key={project.slug} label={<Rail project={project} />}>
+        <HangingSection key={project.slug} head={<Head project={project} />}>
           {project.introHtml && (
             <HangingRow>
               <div className="prose" dangerouslySetInnerHTML={{ __html: project.introHtml }} />

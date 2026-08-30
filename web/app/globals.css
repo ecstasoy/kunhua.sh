@@ -180,3 +180,24 @@ a:hover {
 .prose li::marker {
   color: var(--faint);
 }
+
+/* A heading that spans both columns: name left, stack right, on one line —
+   the arrangement a resume uses. A tech list does not fit an 88px rail. */
+.hang-head {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: -6px;
+}
+.hang-head .name {
+  font-size: 14.5px;
+}
+.hang-head .meta {
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  color: var(--faint);
+  text-align: right;
+}

@@ -7,17 +7,26 @@
  */
 export function HangingSection({
   label,
+  head,
   children,
 }: {
-  label: React.ReactNode;
+  label?: React.ReactNode;
+  /** Spans both columns. For a heading too wide for an 88px rail. */
+  head?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section className="hang">
-      {/* The label takes a row of its own. Letting it share the first row
-          would push every date one row down from the item it belongs to. */}
-      <div className="rail">{label}</div>
-      <div />
+      {head ? (
+        <div className="hang-head">{head}</div>
+      ) : (
+        <>
+          {/* The label takes a row of its own. Letting it share the first row
+              would push every date one row down from the item it belongs to. */}
+          <div className="rail">{label}</div>
+          <div />
+        </>
+      )}
       {children}
     </section>
   );

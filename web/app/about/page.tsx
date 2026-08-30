@@ -6,7 +6,7 @@ export default function About() {
     <div>
       {/* Speaks in the owner's name — written by the owner. */}
       <p className="serif" style={{ fontSize: 17, lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
-        [placeholder]
+        Across the Great Wall we can reach every corner in the world
       </p>
 
       <HangingSection label="Contact">
