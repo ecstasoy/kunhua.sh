@@ -5,20 +5,27 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.join(import.meta.dirname, '..');
-const POST = path.join(ROOT, 'content', 'posts', 'hello.md');
+const POSTS = path.join(ROOT, 'content', 'posts');
+
+// Its own file, removed afterwards. An earlier version rewrote a real post and
+// restored it, which loses the post if the run is interrupted.
+const FIXTURE = path.join(POSTS, '__fixture__.md');
 
 // Drives the real build, because the point is that a bad post stops a deploy —
 // not that a function throws when called directly.
 function buildWith(frontMatter) {
-  const original = fs.readFileSync(POST, 'utf8');
-  fs.writeFileSync(POST, `---\n${frontMatter}\n---\n\n[placeholder]\n`);
+  fs.writeFileSync(FIXTURE, `---\n${frontMatter}\n---\n\nbody\n`);
   try {
-    execFileSync('npm', ['run', 'build'], { cwd: path.join(ROOT, 'web'), encoding: 'utf8', stdio: 'pipe' });
+    execFileSync('npm', ['run', 'build'], {
+      cwd: path.join(ROOT, 'web'),
+      encoding: 'utf8',
+      stdio: 'pipe',
+    });
     return null;
   } catch (err) {
     return String(err.stdout) + String(err.stderr);
   } finally {
-    fs.writeFileSync(POST, original);
+    fs.rmSync(FIXTURE, { force: true });
   }
 }
 
@@ -38,4 +45,9 @@ test('a revision earlier than publication fails', () => {
     'title: "t"\npublished: 2026-08-30T14:32:00-04:00\nupdated: 2026-08-29T10:00:00-04:00\nexcerpt: "e"',
   );
   assert.match(String(out), /updated is earlier than published/);
+});
+
+test('a well-formed post builds', () => {
+  const out = buildWith('title: "t"\npublished: 2026-08-30T14:32:00-04:00\nexcerpt: "e"');
+  assert.equal(out, null);
 });

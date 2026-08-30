@@ -6,6 +6,19 @@ import path from 'node:path';
 const OUT = path.join(import.meta.dirname, '..', 'web', 'out');
 const read = (p) => fs.readFileSync(path.join(OUT, p), 'utf8');
 
+// Pick a post from the emitted output rather than naming one. Asserting on a
+// particular slug couples the gate to whichever post happens to exist, so
+// deleting or renaming one turns the build red for an unrelated reason.
+function somePost() {
+  const dir = path.join(OUT, 'posts');
+  const slug = fs
+    .readdirSync(dir, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name)[0];
+  assert.ok(slug, 'no post was emitted');
+  return read(path.join('posts', slug, 'index.html'));
+}
+
 test('emits every page at its expected path', () => {
     for (const p of ['index.html', 'posts/index.html', 'projects/index.html',
         'about/index.html']) {
@@ -14,7 +27,7 @@ test('emits every page at its expected path', () => {
 });
 
 test('renders post bodies into the page', () => {
-    const html = read('posts/hello/index.html');
+    const html = somePost();
     assert.match(html, /<p>/);
 });
 
@@ -41,7 +54,7 @@ test('none of the prohibited visual devices appear', () => {
 });
 
 test('post pages carry a machine-readable timestamp to the minute', () => {
-  const html = read('posts/hello/index.html');
+  const html = somePost();
   // React emits the prop as dateTime; HTML parsing lowercases attribute names,
   // so browsers see datetime. Assert case-insensitively rather than fighting it.
   assert.match(html, /<time[^>]+datetime="\d{4}-\d{2}-\d{2}T[\d:.]+Z"/i);
