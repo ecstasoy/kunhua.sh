@@ -7,6 +7,7 @@ import {
   Noto_Serif_SC,
 } from 'next/font/google';
 import { htmlLang, type Locale } from '@/lib/locale';
+import { ThemeScript } from '@/components/ThemeScript';
 
 // Downloaded and self-hosted at build time — the published pages make no
 // request to a font host.
@@ -32,6 +33,9 @@ export function RootHtml({ locale, children }: { locale: Locale; children: React
       lang={htmlLang[locale]}
       className={`${sans.variable} ${serif.variable} ${mono.variable} ${cjkSans.variable} ${cjkSerif.variable}`}
     >
+      <head>
+        <ThemeScript />
+      </head>
       <body>{children}</body>
     </html>
   );

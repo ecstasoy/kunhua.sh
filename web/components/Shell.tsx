@@ -1,5 +1,6 @@
 import { GitHubIcon, MailIcon } from '@/components/Icons';
 import { EmailLink } from '@/components/Email';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { href, other, switchLabel, type Locale } from '@/lib/locale';
 
 /**
@@ -38,6 +39,7 @@ export function Shell({
           <a href={href(locale, '/projects/')}>Projects</a>
           <a href={href(locale, '/about/')}>About</a>
           <a href={altHref} className="locale-switch">{switchLabel[alt]}</a>
+          <ThemeToggle />
         </nav>
       </header>
       {children}

@@ -202,3 +202,34 @@ test('every hreflang target exists', () => {
   assert.ok(checked > 0, 'no hreflang alternates found');
 });
 
+// ── theme ──────────────────────────────────────────────────────────────────
+
+test('every page runs the theme script inside head, before anything paints', () => {
+  // Next's 404 output is excluded: Caddy has no handle_errors, so it is never
+  // served and carries none of the site's own head.
+  for (const file of everyPage().filter((f) => !/404|_not-found/.test(f))) {
+    const html = fs.readFileSync(file, 'utf8');
+    const head = html.match(/<head>([\s\S]*?)<\/head>/);
+    assert.ok(head, `${file}: no head`);
+    // Synchronous and in head is what makes the first paint already correct;
+    // deferred or moved into body, the page would flash the wrong theme.
+    assert.match(head[1], /<script>\(function\(\)\{var t;/, `${file}: theme script missing from head`);
+    assert.doesNotMatch(head[1], /<script[^>]+(defer|async)[^>]*>\(function\(\)\{var t;/);
+  }
+});
+
+test('the dark theme redefines the tokens', () => {
+  const css = fs
+    .readdirSync(path.join(OUT, '_next/static/chunks'))
+    .filter((f) => f.endsWith('.css'))
+    .map((f) => fs.readFileSync(path.join(OUT, '_next/static/chunks', f), 'utf8'))
+    .join('');
+  assert.match(css, /\[data-theme=["\']?dark["\']?\]/);
+  // Every colour comes from these, so a theme that missed one would leave a
+  // light value stranded on a dark page.
+  for (const token of ['--paper', '--ink', '--rule', '--accent']) {
+    const block = css.match(/\[data-theme=["\']?dark["\']?\]\{([^}]*)\}/);
+    assert.ok(block && block[1].includes(token), `dark theme does not set ${token}`);
+  }
+});
+
