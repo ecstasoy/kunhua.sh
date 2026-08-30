@@ -17,10 +17,18 @@ function read(slug: string) {
     const { data, content } = matter(raw);
 
     for (const field of ['title', 'date', 'excerpt'] as const) {
-        if (!data[field]) {
+        const v = data[field];
+        if (!v) {
             throw new Error(`content/posts/${slug}.md is missing front-matter: ${field}`);
         }
-    }
+
+        if (field !== 'date' && typeof v !== 'string') {
+            throw new Error(
+                `content/posts/${slug}.md: ${field} must be a string, got ${Array.isArray(v) ? 'a list' : typeof v}` +
+                ` — quote it if it starts with [`,
+            );
+        }
+  }
 
     const meta: PostMeta = {
         slug,

@@ -7,11 +7,16 @@ on:
       - 'web/**'
       - 'content/**'
       - 'deploy/release.sh'
+      - 'test/**'
+      - 'check'
       - '.github/workflows/web.yml'
   pull_request:
     paths:
       - 'web/**'
       - 'content/**'
+      - 'deploy/release.sh'
+      - 'test/**'
+      - 'check'
 
 jobs:
   build:
@@ -27,8 +32,8 @@ jobs:
       - run: npm ci
         working-directory: web
 
-      - run: npm run build
-        working-directory: web
+      # The same script that runs locally — not an approximation of it.
+      - run: ./check
 
       - name: Deploy
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'

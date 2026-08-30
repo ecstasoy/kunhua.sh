@@ -20,6 +20,7 @@
   "devDependencies": {
     "@types/node": "^26.4.0",
     "@types/react": "^19.2.18",
+    "linkinator": "^8.1.0",
     "typescript": "^7.0.2"
   },
   "private": true

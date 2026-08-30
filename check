@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# The one gate. CI runs this same script.
+set -euo pipefail
+cd "$(dirname "$0")"
+
+echo "→ release.sh"
+node --test test/release.test.mjs
+
+echo "→ build"
+(cd web && npm run build)
+
+echo "→ output"
+node --test test/output.test.mjs
+
+echo "→ links"
+# linkinator serves the directory over HTTP, so every link becomes a
+# localhost URL. Skipping /^https?:\/\// therefore skips everything — it
+# reported "scanned 0 links" and looked like it was passing. Exclude only
+# links that are not local.
+(cd web && npx linkinator out --recurse --silent --skip '^https?://(?!localhost|127\.0\.0\.1)')

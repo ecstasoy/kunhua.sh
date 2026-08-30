@@ -5,7 +5,7 @@
 set -euo pipefail
 
 SHA="${1:?usage: release.sh <sha>}"
-ROOT=/srv/kunhua.sh
+ROOT="${SITE_ROOT:-/srv/kunhua.sh}"
 TARGET="$ROOT/releases/$SHA"
 
 # Check for missing or empty directory before swapping
