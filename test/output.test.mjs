@@ -67,3 +67,19 @@ test('listings show the date only — the rail is too narrow for a time', () => 
   assert.ok(shown, 'no dated entry on the homepage');
   assert.match(shown[1], /^\d{4}-\d{2}-\d{2}$/);
 });
+
+test('emits exactly the posts that exist, and nothing else', () => {
+  const source = fs
+    .readdirSync(path.join(import.meta.dirname, '..', 'content', 'posts'))
+    .filter((f) => f.endsWith('.md'))
+    .map((f) => f.replace(/\.md$/, ''))
+    .sort();
+  const emitted = fs
+    .readdirSync(path.join(OUT, 'posts'), { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name)
+    .sort();
+  // A stale or leaked page here would be deployed: the deploy step rsyncs the
+  // whole of out/. A test fixture once made it this far.
+  assert.deepEqual(emitted, source);
+});
