@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
-# Hardens a fresh machine and lays out the directories the site needs.
-# Run once as root on a new box. Idempotent — re-running changes nothing.
+# Hardens a fresh machine, lays out the site directories, and installs Caddy.
+# Idempotent — safe to re-run on a live machine after editing it.
 #
-#   scp infra/bootstrap.sh root@kunhua.sh:/tmp/ && ssh root@kunhua.sh 'bash /tmp/bootstrap.sh'
+# Upload Caddyfile alongside it; this script looks for it next to itself.
+#
+#   scp infra/bootstrap.sh infra/Caddyfile deploy@kunhua.sh:~/
+#   ssh deploy@kunhua.sh 'sudo bash ~/bootstrap.sh'
+#
+# On a blank machine root is still reachable, so use root@ and drop the sudo.
+# After the first run root login is disabled and only deploy@ works.
 set -euo pipefail
 
 DEPLOY_USER=deploy
@@ -31,7 +37,7 @@ if ! [ -s "/home/$DEPLOY_USER/.ssh/authorized_keys" ]; then
   exit 1
 fi
 
-# passwordless sudo, so CI can run the release without a TTY
+# deploy is the human admin identity; CI has its own unprivileged user below.
 echo "$DEPLOY_USER ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/90-$DEPLOY_USER"
 chmod 440 "/etc/sudoers.d/90-$DEPLOY_USER"
 
@@ -41,7 +47,7 @@ if ! id "$CI_USER" &>/dev/null; then
   adduser --disabled-password --gecos "" --shell /bin/bash "$CI_USER"
 fi
 install -d -m 700 -o "$CI_USER" -g "$CI_USER" "/home/$CI_USER/.ssh"
-install -m 600 -o "&CI_USER" -g "$CI_USER" /root/.ssh/authorized_keys "/home/$CI_USER/.ssh/authorized_keys"
+install -m 600 -o "$CI_USER" -g "$CI_USER" /dev/null "/home/$CI_USER/.ssh/authorized_keys"
 
 getent group "$SITE_GROUP" >/dev/null || groupadd "$SITE_GROUP"
 usermod -aG "$SITE_GROUP" "$DEPLOY_USER"
@@ -105,7 +111,7 @@ chmod -R g+w "$SITE_ROOT"
 # -- caddy --------------------------------------------------------------------
 
 if ! command -v caddy &>/dev/null; then
-  apt-get install -y debian-keyring debian -archive-keyring apt-transport-https curl
+  apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl
   curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/gpg.key \
     | gpg --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
   curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt \
