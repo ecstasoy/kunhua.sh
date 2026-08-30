@@ -43,4 +43,4 @@ jobs:
           SSH="ssh -i ~/.ssh/ci_key"
           rsync -az --delete -e "$SSH" web/out/ "ci@$HOST:/srv/kunhua.sh/releases/$SHA/"
           scp -i ~/.ssh/ci_key deploy/release.sh "ci@$HOST:/srv/kunhua.sh/release.sh"
-          $SSH "ci@$HOST" "chmod +x /srv/kunhua.sh/release.sh && /srv/kunhua.sh/release.sh $SHA"
+          $SSH "ci@$HOST" "bash /srv/kunhua.sh/release.sh $SHA"
