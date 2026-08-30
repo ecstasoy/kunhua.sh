@@ -10,7 +10,7 @@ echo "→ build"
 (cd web && npm run build)
 
 echo "→ output"
-node --test test/output.test.mjs
+node --test test/output.test.mjs test/frontmatter.test.mjs
 
 echo "→ links"
 # linkinator serves the directory over HTTP, so every link becomes a

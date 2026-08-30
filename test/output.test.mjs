@@ -39,3 +39,18 @@ test('none of the prohibited visual devices appear', () => {
         assert.ok(!css.includes(bad), `found ${bad}`);
     }
 });
+
+test('post pages carry a machine-readable timestamp to the minute', () => {
+  const html = read('posts/hello/index.html');
+  // React emits the prop as dateTime; HTML parsing lowercases attribute names,
+  // so browsers see datetime. Assert case-insensitively rather than fighting it.
+  assert.match(html, /<time[^>]+datetime="\d{4}-\d{2}-\d{2}T[\d:.]+Z"/i);
+  assert.match(html, /\d{4}-\d{2}-\d{2} \d{2}:\d{2} [A-Z]{2,5}</);
+});
+
+test('listings show the date only — the rail is too narrow for a time', () => {
+  const html = read('index.html');
+  const shown = html.match(/<time class="date"[^>]*>([^<]+)</);
+  assert.ok(shown, 'no dated entry on the homepage');
+  assert.match(shown[1], /^\d{4}-\d{2}-\d{2}$/);
+});
