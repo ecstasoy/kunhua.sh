@@ -163,3 +163,20 @@ a:hover {
   display: block;
   margin: 12px 0;
 }
+
+/* Resume-style bullets: dense, and the marker sits in the gutter so the text
+   block still lines up with the rail. */
+.prose ul {
+  margin: 0;
+  padding-left: 16px;
+  list-style: square;
+}
+.prose li {
+  font-size: 12.5px;
+  line-height: 1.72;
+  color: var(--soft);
+  margin-bottom: 7px;
+}
+.prose li::marker {
+  color: var(--faint);
+}

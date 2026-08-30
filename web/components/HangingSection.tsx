@@ -9,7 +9,7 @@ export function HangingSection({
   label,
   children,
 }: {
-  label: string;
+  label: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (

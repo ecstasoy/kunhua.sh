@@ -17,6 +17,10 @@ export type ProjectMeta = {
   name: string;
   /** The single line the homepage shows. */
   summary: string;
+  /** Shown in the rail beside the name, the way a resume lists it. */
+  stack: string;
+  code?: string;
+  live?: string;
   order: number;
 };
 export type Project = ProjectMeta & {
@@ -39,7 +43,7 @@ function read(slug: string) {
   const raw = fs.readFileSync(path.join(DIR, `${slug}.md`), 'utf8');
   const { data, content } = matter(raw);
 
-  for (const field of ['name', 'summary'] as const) {
+  for (const field of ['name', 'summary', 'stack'] as const) {
     const v = data[field];
     if (!v) {
       throw new Error(`content/projects/${slug}.md is missing front-matter: ${field}`);
@@ -74,6 +78,9 @@ function read(slug: string) {
       slug,
       name: String(data.name),
       summary: String(data.summary),
+      stack: String(data.stack),
+      ...(data.code ? { code: String(data.code) } : {}),
+      ...(data.live ? { live: String(data.live) } : {}),
       // Ranked by what is worth reading first, not by date. Unranked sinks.
       order: typeof data.order === 'number' ? data.order : Number.MAX_SAFE_INTEGER,
     } satisfies ProjectMeta,

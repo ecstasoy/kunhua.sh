@@ -75,11 +75,16 @@ test('a project without a summary fails the build', () => {
   assert.match(String(out), /content\/projects\/__fixture__\.md is missing front-matter: summary/);
 });
 
+test('a project without a stack fails the build', () => {
+  const out = buildWithProject('name: "n"\nsummary: "s"');
+  assert.match(String(out), /missing front-matter: stack/);
+});
+
 test('a project with a non-numeric order fails', () => {
-  const out = buildWithProject('name: "n"\nsummary: "s"\norder: soon');
+  const out = buildWithProject('name: "n"\nsummary: "s"\nstack: "Go"\norder: soon');
   assert.match(String(out), /order must be a number/);
 });
 
 test('a well-formed project builds', () => {
-  assert.equal(buildWithProject('name: "n"\nsummary: "s"\norder: 9'), null);
+  assert.equal(buildWithProject('name: "n"\nsummary: "s"\nstack: "Go"\norder: 9'), null);
 });
