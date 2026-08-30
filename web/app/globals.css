@@ -134,3 +134,9 @@ a:hover {
     margin-top: 0;
   }
 }
+
+/* A rail cell used as a field name rather than a date. */
+.rail-note {
+  font-size: 11.5px;
+  color: var(--muted);
+}

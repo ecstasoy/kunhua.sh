@@ -9,7 +9,7 @@ export default function Home() {
       {/* The opening statement speaks in the owner's name, so it is written by
           the owner and not generated. */}
       <p className="serif" style={{ fontSize: 17, lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
-        [开场句待写]
+        [placeholder]
       </p>
 
       <HangingSection label="Writing">
@@ -34,7 +34,7 @@ export default function Home() {
             <a href="/projects/">dash</a>
           </div>
           {/* Project descriptions speak in the owner's name too. */}
-          <p className="item-excerpt">[项目描述待写]</p>
+          <p className="item-excerpt">[placeholder]</p>
         </HangingRow>
       </HangingSection>
     </div>
