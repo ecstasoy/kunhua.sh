@@ -37,7 +37,7 @@ export default function Home() {
         <HangingRow>
           <div className="item-title">
             <a href="https://github.com/pulls?q=is%3Apr+author%3Aecstasoy+is%3Amerged+org%3Arime">
-              RIME 输入法
+              RIME / Squirrel
             </a>
           </div>
         </HangingRow>
