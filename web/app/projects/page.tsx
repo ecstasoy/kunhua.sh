@@ -6,18 +6,22 @@ import { HangingSection, HangingRow } from '@/components/HangingSection';
 function Head({ project }: { project: Project }) {
   return (
     <>
-      <span className="name">{project.name}</span>
-      <span className="meta">
-        {project.stack}
-        {(project.live || project.code) && ' · '}
-        {project.live && (
-          <a href={project.live} style={{ borderBottomColor: 'var(--rule)' }}>live</a>
-        )}
-        {project.live && project.code && ' · '}
-        {project.code && (
-          <a href={project.code} style={{ borderBottomColor: 'var(--rule)' }}>code</a>
-        )}
-      </span>
+      <div className="hang-head-top">
+        <span className="name">{project.name}</span>
+        <span className="meta">
+          {project.stack}
+          {(project.live || project.code) && ' · '}
+          {project.live && (
+            <a href={project.live} style={{ borderBottomColor: 'var(--rule)' }}>live</a>
+          )}
+          {project.live && project.code && ' · '}
+          {project.code && (
+            <a href={project.code} style={{ borderBottomColor: 'var(--rule)' }}>code</a>
+          )}
+        </span>
+      </div>
+      {/* The resume calls this 项目描述: one line before the bullets. */}
+      <p className="hang-lede">{project.summary}</p>
     </>
   );
 }

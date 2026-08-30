@@ -99,12 +99,34 @@ test('project headings become rail labels, never plain headings', () => {
   }
 });
 
-test('the homepage and the projects page share one summary', () => {
+test('every summary on the homepage comes verbatim from a project file', () => {
+  const dir = path.join(import.meta.dirname, '..', 'content', 'projects');
+  const summaries = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.md'))
+    .map((f) => fs.readFileSync(path.join(dir, f), 'utf8'))
+    .map((raw) => raw.match(/^summary:\s*"?(.*?)"?\s*$/m)?.[1])
+    .filter(Boolean);
+  assert.ok(summaries.length > 0, 'no project summaries found');
+
+  const unescape = (t) =>
+    t.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+     .replace(/&quot;/g, '"').replace(/&#x27;/g, "'");
+
+  // The homepage shows a subset, so what matters is not how many appear but
+  // that none of them is a second copy of the text living in the page.
   const home = read('index.html');
-  const source = fs
-    .readdirSync(path.join(import.meta.dirname, '..', 'content', 'projects'))
-    .filter((f) => f.endsWith('.md'));
-  assert.ok(source.length > 0, 'no projects to check');
-  // Every project appears on the homepage, linking to the single page.
-  assert.equal((home.match(/href="\/projects\/"/g) || []).length >= source.length, true);
+  // The rail label, not the masthead link of the same name, which comes first
+  // in the document and would drag the Writing section into the slice.
+  const marker = '<div class="rail">Projects</div>';
+  const at = home.indexOf(marker);
+  assert.notEqual(at, -1, 'no Projects section on the homepage');
+  const shownAfterProjects = home.slice(at);
+  const shown = [...shownAfterProjects.matchAll(/<p class="item-excerpt">([^<]*)<\/p>/g)]
+    .map((m) => unescape(m[1]));
+  assert.ok(shown.length > 0, 'no project summary rendered on the homepage');
+  for (const text of shown) {
+    assert.ok(summaries.includes(text), `not from a project file: ${text.slice(0, 30)}`);
+  }
 });
+

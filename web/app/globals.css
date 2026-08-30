@@ -185,12 +185,20 @@ a:hover {
    the arrangement a resume uses. A tech list does not fit an 88px rail. */
 .hang-head {
   grid-column: 1 / -1;
+  margin-bottom: -6px;
+}
+.hang-head-top {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: -6px;
+}
+.hang-lede {
+  font-size: 12.5px;
+  line-height: 1.72;
+  color: var(--soft);
+  margin: 5px 0 0;
 }
 .hang-head .name {
   font-size: 14.5px;
