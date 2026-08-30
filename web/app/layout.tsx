@@ -6,6 +6,8 @@ import {
   Noto_Sans_SC,
   Noto_Serif_SC,
 } from 'next/font/google';
+import { GitHubIcon, MailIcon } from '@/components/Icons';
+import { EmailLink } from '@/components/Email';
 import './globals.css';
 
 // Downloaded and self-hosted at build time — the published pages make no
@@ -34,7 +36,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <div className="shell">
           <header className="masthead">
-            <a href="/" className="mono wordmark">kunhua.sh</a>
+            <span className="brand">
+              <a href="/" className="mono wordmark">kunhua.sh</a>
+              <span className="brand-icons">
+                <a href="https://github.com/ecstasoy" aria-label="GitHub">
+                  <GitHubIcon />
+                </a>
+                <EmailLink>
+                  <MailIcon />
+                </EmailLink>
+              </span>
+            </span>
             <nav>
               <a href="/posts/">Writing</a>
               <a href="/projects/">Projects</a>
@@ -42,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </nav>
           </header>
           {children}
+          <footer className="colophon mono">© 2026 Kunhua Huang</footer>
         </div>
       </body>
     </html>

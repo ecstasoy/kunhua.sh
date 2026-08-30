@@ -209,3 +209,32 @@ a:hover {
   color: var(--faint);
   text-align: right;
 }
+
+/* Wordmark and its icons share a baseline; the icons are muted so the
+   masthead still reads as one line of text rather than a toolbar. */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.brand-icons a {
+  border-bottom: none;
+  color: var(--faint);
+  display: inline-flex;
+}
+.brand-icons a:hover {
+  color: var(--accent);
+}
+
+.colophon {
+  margin-top: 46px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+  font-size: 11px;
+  color: var(--faint);
+}
