@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <div className="shell">
           <header className="masthead">
-            <span className="mono">kunhua.sh</span>
+            <a href="/" className="mono wordmark">kunhua.sh</a>
             <nav>
               <a href="/posts/">Writing</a>
               <a href="/projects/">Projects</a>
