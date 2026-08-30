@@ -49,6 +49,11 @@ go.work.sum
 .vscode/
 .obsidian/
 
+# Drafts stay local: this repo is public, and half-formed writing would be
+# readable by the audience the site exists for. Deleting a draft later would
+# not remove it from history either.
+content/drafts/
+
 # next
 web/.next/
 web/out/
