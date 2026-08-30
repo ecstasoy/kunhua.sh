@@ -1,26 +1,30 @@
+import { getAllProjects } from '@/lib/projects';
 import { HangingSection, HangingRow } from '@/components/HangingSection';
 
-// Project write-ups speak in the owner's name and are not generated. The
-// structure below is the point: what was hard and what would change carry the
-// signal, and only the owner can supply them.
+// Every project on one page: a hiring reader reads a page, not four.
 export default function Projects() {
+  const projects = getAllProjects();
   return (
     <div>
+      {/* Speaks in the owner's name — written by the owner. */}
       <p className="serif" style={{ fontSize: 17, lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
         [placeholder]
       </p>
 
-      <HangingSection label="dash">
-        <HangingRow>
-          <p className="item-excerpt">[What it is]</p>
-        </HangingRow>
-        <HangingRow rail={<span className="rail-note">Bullet point</span>}>
-          <p className="item-excerpt">[placeholder]</p>
-        </HangingRow>
-        <HangingRow rail={<span className="rail-note">To be done</span>}>
-          <p className="item-excerpt">[placeholder]</p>
-        </HangingRow>
-      </HangingSection>
+      {projects.map((project) => (
+        <HangingSection key={project.slug} label={project.name}>
+          {project.introHtml && (
+            <HangingRow>
+              <div className="prose" dangerouslySetInnerHTML={{ __html: project.introHtml }} />
+            </HangingRow>
+          )}
+          {project.sections.map((section) => (
+            <HangingRow key={section.label} rail={<span className="rail-note">{section.label}</span>}>
+              <div className="prose" dangerouslySetInnerHTML={{ __html: section.html }} />
+            </HangingRow>
+          ))}
+        </HangingSection>
+      ))}
     </div>
   );
 }

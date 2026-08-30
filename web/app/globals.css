@@ -145,3 +145,21 @@ a:hover {
   font-size: 11.5px;
   color: var(--muted);
 }
+
+/* Rendered markdown inside a rail row: the row already sets the rhythm, so
+   paragraphs should not add their own leading margin. */
+.prose p {
+  font-size: 12.5px;
+  line-height: 1.72;
+  color: var(--soft);
+  margin: 0 0 10px;
+}
+.prose p:last-child {
+  margin-bottom: 0;
+}
+.prose img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 12px 0;
+}

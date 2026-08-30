@@ -1,15 +1,17 @@
 import { getAllPosts } from '@/lib/posts';
+import { getAllProjects } from '@/lib/projects';
 import { HangingSection, HangingRow } from '@/components/HangingSection';
 
 export default function Home() {
   const posts = getAllPosts().slice(0, 3);
+  const projects = getAllProjects();
 
   return (
     <div>
       {/* The opening statement speaks in the owner's name, so it is written by
           the owner and not generated. */}
       <p className="serif" style={{ fontSize: 17, lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
-        [placeholder]
+        [opening statement]
       </p>
 
       <HangingSection label="Writing">
@@ -29,13 +31,15 @@ export default function Home() {
       </HangingSection>
 
       <HangingSection label="Projects">
-        <HangingRow>
-          <div className="item-title">
-            <a href="/projects/">dash</a>
-          </div>
-          {/* Project descriptions speak in the owner's name too. */}
-          <p className="item-excerpt">[placeholder]</p>
-        </HangingRow>
+        {projects.map((project) => (
+          <HangingRow key={project.slug}>
+            <div className="item-title">
+              <a href="/projects/">{project.name}</a>
+            </div>
+            {/* Same file the projects page reads, so the summary lives once. */}
+            <p className="item-excerpt">{project.summary}</p>
+          </HangingRow>
+        ))}
       </HangingSection>
     </div>
   );

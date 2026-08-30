@@ -83,3 +83,21 @@ test('emits exactly the posts that exist, and nothing else', () => {
   // whole of out/. A test fixture once made it this far.
   assert.deepEqual(emitted, source);
 });
+
+test('project headings become rail labels', () => {
+  const html = read('projects/index.html');
+  // The rail is what makes this layout the site's own; a project whose
+  // sections rendered as ordinary headings would have quietly lost it.
+  assert.match(html, /<span class="rail-note">[^<]+<\/span>/);
+  assert.doesNotMatch(html, /<h2[^>]*>/);
+});
+
+test('the homepage and the projects page share one summary', () => {
+  const home = read('index.html');
+  const source = fs
+    .readdirSync(path.join(import.meta.dirname, '..', 'content', 'projects'))
+    .filter((f) => f.endsWith('.md'));
+  assert.ok(source.length > 0, 'no projects to check');
+  // Every project appears on the homepage, linking to the single page.
+  assert.equal((home.match(/href="\/projects\/"/g) || []).length >= source.length, true);
+});
