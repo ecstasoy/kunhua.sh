@@ -41,6 +41,8 @@ jobs:
           install -m 600 /dev/stdin ~/.ssh/ci_key <<< "$DEPLOY_KEY"
           ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
           SSH="ssh -i ~/.ssh/ci_key"
-          rsync -az --delete -e "$SSH" web/out/ "ci@$HOST:/srv/kunhua.sh/releases/$SHA/"
+          # Dg+w/Fg+w so the other identity can clean these up later: retention
+          # runs as whoever deploys, and rm -rf needs write on the directory.
+          rsync -az --delete --chmod=Dg+w,Fg+w -e "$SSH" web/out/ "ci@$HOST:/srv/kunhua.sh/releases/$SHA/"
           scp -i ~/.ssh/ci_key deploy/release.sh "ci@$HOST:/srv/kunhua.sh/release.sh"
           $SSH "ci@$HOST" "bash /srv/kunhua.sh/release.sh $SHA"
