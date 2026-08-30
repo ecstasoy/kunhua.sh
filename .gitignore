@@ -47,6 +47,7 @@ go.work.sum
 # Editor/IDE
 .idea/
 .vscode/
+.obsidian/
 
 # next
 web/.next/
