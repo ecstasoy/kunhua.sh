@@ -1,0 +1,84 @@
+:root {
+  --paper: #ffffff;
+  --ink: #191817;
+  --muted: #6b6660;
+  --soft: #5d5852;
+  --faint: #9c968d;
+  --rule: #e4e1db;
+  --accent: #a8391c;
+
+  --measure: 700px;
+  --rail: 88px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  /* Plex carries no CJK glyphs, so Chinese falls through to Noto on its own.
+     No per-script partitioning, and no build-time subsetting to maintain. */
+  font-family: var(--font-sans), var(--font-cjk-sans), system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+.shell {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 34px 22px 60px;
+}
+
+/* Underline rather than colour, so a link reads as a link in body copy
+   without the accent turning up on every line. */
+a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--ink);
+}
+a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.mono {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.serif {
+  font-family: var(--font-serif), var(--font-cjk-serif), Georgia, serif;
+}
+
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--ink);
+  margin-bottom: 30px;
+}
+.masthead nav a {
+  border-bottom: none;
+  margin-left: 22px;
+  color: var(--muted);
+}
+.masthead nav a:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 620px) {
+  /* The rail becomes a squeeze rather than a structure on a phone. */
+  :root {
+    --rail: 0px;
+  }
+  .shell {
+    padding: 24px 18px 48px;
+  }
+  .masthead nav a {
+    margin-left: 14px;
+  }
+}
