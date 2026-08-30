@@ -46,11 +46,16 @@ sshd_set PasswordAuthentication no
 sshd_set PermitRootLogin no
 sshd_set KbdInteractiveAuthentication no
 
-# Providers ship drop-ins that re-enable password auth and outrank the main
-# file, which silently undoes the two lines above.
+# Provider images ship drop-ins that re-enable password auth — Debian on Vultr
+# ships 50-cloud-init.conf with `PasswordAuthentication yes`. sshd takes the
+# FIRST occurrence of a keyword, and Include sits near the top of the main file,
+# so a drop-in beats the main config and a lower-numbered drop-in beats a higher
+# one. The hardening file therefore has to sort before anything the provider
+# ships, not after it.
 if [ -d /etc/ssh/sshd_config.d ]; then
+  rm -f /etc/ssh/sshd_config.d/99-hardening.conf   # earlier, ineffective name
   printf 'PasswordAuthentication no\nPermitRootLogin no\nKbdInteractiveAuthentication no\n' \
-    > /etc/ssh/sshd_config.d/99-hardening.conf
+    > /etc/ssh/sshd_config.d/00-hardening.conf
 fi
 
 sshd -t                                   # never restart into a broken config
