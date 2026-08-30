@@ -14,7 +14,7 @@ export default function Home() {
 
       <HangingSection label="Writing">
         {posts.map((p) => (
-          <HangingRow key={p.slug} rail={<span className="date">{p.date}</span>}>
+          <HangingRow key={p.slug} rail={<time className="date" dateTime={p.published}>{p.publishedDate}</time>}>
             <div className="item-title">
               <a href={`/posts/${p.slug}/`}>{p.title}</a>
             </div>
