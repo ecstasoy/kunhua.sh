@@ -61,6 +61,11 @@ a:hover {
   border-bottom: 1px solid var(--ink);
   margin-bottom: 30px;
 }
+/* The wordmark and the nav are links, but a rule under either would read as
+   emphasis rather than navigation. */
+.masthead .wordmark {
+  border-bottom: none;
+}
 .masthead nav a {
   border-bottom: none;
   margin-left: 22px;
