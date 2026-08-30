@@ -1,0 +1,42 @@
+# Authoritative copy. Deployed to /etc/caddy/Caddyfile.
+#
+# Caddy runs on the host under systemd rather than in a container: it reads the
+# release directory directly and persists its certificates, both of which are
+# zero-config here and need mounted volumes otherwise.
+
+kunhua.sh {
+	# The Go service does not exist yet — this 502s until it does. Configured
+	# now so the server config is not revisited when it arrives.
+	handle /api/* {
+		reverse_proxy localhost:8080
+	}
+
+	# Terminal recordings are served straight from disk, never through the Go
+	# service, so playback survives the service being down.
+	handle /casts/* {
+		root * /srv/kunhua.sh/data
+		file_server
+	}
+
+	handle {
+		root * /srv/kunhua.sh/current
+		file_server
+	}
+
+	encode zstd gzip
+
+	# Build output is content-hashed, so it can be cached forever. Everything
+	# else must revalidate, or a release swap would not be visible.
+	header /_next/static/* Cache-Control "public, max-age=31536000, immutable"
+	header Cache-Control "public, max-age=0, must-revalidate"
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+www.kunhua.sh {
+	redir https://kunhua.sh{uri} permanent
+}
