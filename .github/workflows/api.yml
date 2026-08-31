@@ -1,0 +1,71 @@
+name: api
+
+# Path-filtered so that editing prose cannot restart a service that is holding
+# a database open. content/** is deliberately absent.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'api/**'
+      - 'deploy/api-release.sh'
+      - 'deploy/kunhua-api.service'
+      - 'test/api-release.test.mjs'
+      - 'check'
+      - '.github/workflows/api.yml'
+  pull_request:
+    paths:
+      - 'api/**'
+      - 'deploy/api-release.sh'
+      - 'deploy/kunhua-api.service'
+      - 'test/api-release.test.mjs'
+      - 'check'
+      - '.github/workflows/api.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: api/go.mod
+          cache-dependency-path: api/go.sum
+
+      # The same script that runs locally — not an approximation of it.
+      - run: ./check api
+
+      # Its own slice because it needs systemd, which the machine this was
+      # written on does not have. It fails rather than skips when
+      # systemd-analyze is missing, so a silent pass is not a possible outcome.
+      - run: ./check unit
+
+      - name: Build
+        # Pure-Go SQLite is what makes this a static binary, and a static
+        # binary is what makes systemd enough — nothing on the host has to
+        # match what it was built against.
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o server ./cmd/server
+        working-directory: api
+
+      - name: Deploy
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          SHA: ${{ github.sha }}
+        run: |
+          mkdir -p ~/.ssh
+          install -m 600 /dev/stdin ~/.ssh/ci_key <<< "$DEPLOY_KEY"
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          SSH="ssh -i ~/.ssh/ci_key"
+          DEST="/srv/kunhua.sh/api/releases/$SHA"
+          # Created over ssh rather than by rsync so it inherits the setgid
+          # group of api/releases/ — the same inheritance whose loss broke
+          # retention on the web side.
+          $SSH "ci@$HOST" "mkdir -p $DEST"
+          rsync -az --chmod=Dg+ws,Fg+w -e "$SSH" api/server "ci@$HOST:$DEST/server"
+          scp -i ~/.ssh/ci_key deploy/api-release.sh "ci@$HOST:/srv/kunhua.sh/api-release.sh"
+          # Shipped so the release can compare it with the one the host is
+          # running. ci cannot install it — that needs root — so the only
+          # honest thing it can do is refuse when they differ.
+          scp -i ~/.ssh/ci_key deploy/kunhua-api.service "ci@$HOST:/srv/kunhua.sh/kunhua-api.service"
+          $SSH "ci@$HOST" "bash /srv/kunhua.sh/api-release.sh $SHA"

@@ -79,8 +79,17 @@ Pushing to `main` deploys — CI builds, rsyncs to `releases/<sha>/` on the host
 Rolling back is `ssh deploy@<host> 'bash /srv/kunhua.sh/release.sh <sha>'` — a symlink swap, no
 rebuild. The five most recent releases are kept.
 
-Two identities on the host: `deploy` is the human admin (has sudo), `ci` is what GitHub Actions
-uses and deliberately has none. Publishing needs no root.
+Three identities on the host: `deploy` is the human admin (has sudo), `ci` is what GitHub Actions
+uses and deliberately has none, and `kunhua-api` only runs the service — no shell, not in the `web`
+group, so it can neither publish nor escalate. Publishing needs no root.
+
+The one exception is restarting: `ci` may run `systemctl restart kunhua-api.service` and nothing
+else, through a sudoers rule naming that unit literally.
+
+**Changing `deploy/kunhua-api.service` does not deploy it.** Installing a unit needs root, and a unit
+`ci` could write is a unit that runs anything as root. `api-release.sh` ships the file and compares
+it with the host's, failing the deploy when they differ; installing it is `sudo bash ~/bootstrap.sh`
+as `deploy`.
 
 ## Agent skills
 

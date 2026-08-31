@@ -9,6 +9,9 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 check_api() {
+  echo "→ api-release.sh"
+  node --test test/api-release.test.mjs
+
   echo "→ go vet"
   (cd api && go vet ./...)
 
