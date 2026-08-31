@@ -57,6 +57,9 @@ content/drafts/
 web/.next/
 web/out/
 web/next-env.d.ts
+# TypeScript's incremental build cache. Machine-local and rewritten by every
+# build, so tracking it means every diff carries noise nobody reads.
+web/tsconfig.tsbuildinfo
 
 # Local SQLite database. Runtime data never belongs in git, and WAL mode leaves
 # two more files beside it that are easy to miss.
