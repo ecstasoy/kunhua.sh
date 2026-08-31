@@ -27,13 +27,17 @@ import {
 function Cover({
   album,
   editable,
-  onFocus,
+  pinned,
+  onPreview,
+  onPin,
 }: {
   album: Album;
   /* Marks what still needs writing, and only for the owner: finding the gaps
      and filling them are then one action. */
   editable: boolean;
-  onFocus: () => void;
+  pinned: boolean;
+  onPreview: () => void;
+  onPin: () => void;
 }) {
   const label = `${album.album} — ${album.artist}`;
   const inner = album.art ? (
@@ -60,9 +64,26 @@ function Cover({
 
   return (
     <li
-      className={editable && !album.note ? 'cover unwritten' : 'cover'}
-      onMouseEnter={onFocus}
-      onFocus={onFocus}
+      className={
+        [
+          'cover',
+          editable && !album.note ? 'unwritten' : '',
+          pinned ? 'pinned' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')
+      }
+      onMouseEnter={onPreview}
+      onFocus={onPreview}
+      /* Pinning on click, because hover alone made the note unreachable:
+         every path from a cover to the field passes over other covers, and
+         the album changed before the pointer arrived. When the owner can
+         edit, the click pins instead of following the link — the grid is a
+         picker for them and a set of links for everyone else. */
+      onClick={(e) => {
+        if (editable) e.preventDefault();
+        onPin();
+      }}
     >
       {album.url ? (
         <a href={album.url} rel="noopener noreferrer" aria-label={label}>
@@ -96,10 +117,12 @@ function Cover({
 function Note({
   album,
   editable,
+  takeFocus,
   onSaved,
 }: {
   album: Album;
   editable: boolean;
+  takeFocus: boolean;
   onSaved: (note: string) => void;
 }) {
   const [draft, setDraft] = useState(album.note ?? '');
@@ -131,6 +154,9 @@ function Note({
   return (
     <div className="topster-note-edit">
       <textarea
+        // The field is mounted in response to the owner clicking the album it
+        // belongs to, so taking focus is finishing their gesture.
+        autoFocus={takeFocus}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={save}
@@ -152,7 +178,11 @@ export function Topster() {
   const [data, setData] = useState<TopAlbums | null>(null);
   const [period, setPeriod] = useState<string>(DEFAULT_PERIOD);
   const [size, setSize] = useState<Size>(DEFAULT_SIZE);
-  const [focused, setFocused] = useState<number>(0);
+  // Two, not one: hover previews, a click pins. Without the pin there is no
+  // route from a cover to its note field — every path passes over other
+  // covers, and the album changed before the pointer arrived.
+  const [hovered, setHovered] = useState<number | null>(null);
+  const [pinned, setPinned] = useState<number | null>(null);
 
   // Read after mount, never during render: the server has no localStorage, and
   // reading it while rendering makes the two disagree.
@@ -209,7 +239,9 @@ export function Topster() {
     const s = next.size ?? size;
     setPeriod(p);
     setSize(s);
-    setFocused(0);
+    // The indices meant an album in the old grid.
+    setHovered(null);
+    setPinned(null);
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ period: p, size: s }));
     } catch {
@@ -227,7 +259,10 @@ export function Topster() {
   }
 
   // A remembered index can outlive the grid it pointed into.
-  const caption = albums[focused] ?? albums[0];
+  // Pinned wins over hovered, so moving the pointer towards the field cannot
+  // change what is being annotated. An index can outlive the grid it pointed
+  // into, hence the fallback.
+  const caption = albums[pinned ?? hovered ?? 0] ?? albums[0];
 
   return (
     <HangingSection label="Albums">
@@ -268,13 +303,16 @@ export function Topster() {
             </label>
           </div>
 
-          <ul className="topster" onMouseLeave={() => setFocused(0)}>
+          {/* Only the preview is dropped on leaving; a pinned album stays. */}
+          <ul className="topster" onMouseLeave={() => setHovered(null)}>
             {albums.map((a, i) => (
               <Cover
                 key={`${a.artist}-${a.album}-${i}`}
                 album={a}
                 editable={data?.editable ?? false}
-                onFocus={() => setFocused(i)}
+                pinned={pinned === i}
+                onPreview={() => setHovered(i)}
+                onPin={() => setPinned(i)}
               />
             ))}
           </ul>
@@ -293,6 +331,9 @@ export function Topster() {
             key={albumKey(caption)}
             album={caption}
             editable={data?.editable ?? false}
+            /* Focused when the album was chosen deliberately, so picking a
+               cover and typing are one gesture rather than three. */
+            takeFocus={pinned !== null}
             onSaved={(note) => remember(caption, note)}
           />
         </div>

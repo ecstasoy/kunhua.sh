@@ -622,3 +622,13 @@ pre code {
   color: var(--faint);
   margin-top: 10px;
 }
+
+/* The album a click pinned, which is the one the note field belongs to. */
+.cover.pinned {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.cover.pinned .cover-img,
+.cover.pinned .cover-blank {
+  filter: none;
+}
