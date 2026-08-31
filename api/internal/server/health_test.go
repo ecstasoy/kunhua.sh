@@ -25,7 +25,7 @@ func newTestServer(t *testing.T) (http.Handler, *store.DB) {
 	// Discard the access log: these tests assert on responses, and a logger
 	// writing to stdout would bury the failure output.
 	log := slog.New(slog.NewJSONHandler(io.Discard, nil))
-	return New(db, log), db
+	return New(db, log, Config{}), db
 }
 
 func get(t *testing.T, h http.Handler, path string) *httptest.ResponseRecorder {

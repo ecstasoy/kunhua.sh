@@ -2,6 +2,7 @@ import { getAllPosts } from '@/lib/posts';
 import { getAllProjects } from '@/lib/projects';
 import { HangingSection, HangingRow } from '@/components/HangingSection';
 import { Untranslated } from '@/components/Untranslated';
+import { MachineStatus } from '@/components/MachineStatus';
 import { DEFAULT_LOCALE, path, type Locale } from '@/lib/locale';
 
 export function Home({ locale }: { locale: Locale }) {
@@ -18,6 +19,14 @@ export function Home({ locale }: { locale: Locale }) {
       <p style={{ fontSize: 'var(--text-body)', lineHeight: 1.72, color: 'var(--soft)', maxWidth: '48ch', margin: '4px 0 6px' }}>
         MSCS @Northeastern University
       </p>
+
+      {/* Facts about the machine, read at view time. Interface text stays
+          English in both locales, as everything outside the content does. */}
+      <HangingSection label="Machine">
+        <HangingRow>
+          <MachineStatus />
+        </HangingRow>
+      </HangingSection>
 
       <HangingSection label="Writing">
         {posts.map((p) => (

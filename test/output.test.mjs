@@ -270,3 +270,46 @@ test('every internal fragment link lands on an element that exists', () => {
   assert.ok(checked > 0, 'no fragment links found');
 });
 
+
+test('the homepage carries the machine line in its unavailable state', () => {
+    // The static export is what keeps the site up when the service is not, so
+    // the degraded path is the one that ships. Asserting it here covers it in
+    // the build rather than relying on someone remembering to stop the service
+    // and look — which is how "renders without the service" quietly stops
+    // being true.
+    for (const home of ['index.html', 'en/index.html']) {
+        const html = read(home);
+        assert.match(
+            html,
+            /data-machine-status="unavailable"/,
+            `${home}: no machine line, or it was emitted as if live`,
+        );
+        // The em dash placeholder, twice: uptime and deploy time.
+        const placeholders = html.match(/data-machine-status="unavailable"[^]*?<\/p>/)?.[0] ?? '';
+        assert.equal(
+            (placeholders.match(/—/g) ?? []).length,
+            2,
+            `${home}: expected a placeholder for both values`,
+        );
+        assert.match(placeholders, /service unreachable/, `${home}: no explanation`);
+    }
+});
+
+test('the machine line names no value the service does not send', () => {
+    // The frontend type and the Go handler are two declarations of one
+    // contract; nothing but a matching pair of tests keeps them together.
+    const contract = fs.readFileSync(
+        path.join(import.meta.dirname, '..', 'web', 'lib', 'status.ts'), 'utf8');
+    const status = fs.readFileSync(
+        path.join(import.meta.dirname, '..', 'api', 'internal', 'server', 'status.go'), 'utf8');
+
+    const fields = [...contract.matchAll(/^\s{2}(\w+):/gm)].map((m) => m[1]);
+    assert.ok(fields.length >= 3, 'no fields found in the frontend type');
+    for (const field of fields) {
+        assert.match(
+            status,
+            new RegExp(`json:"${field}"`),
+            `web/lib/status.ts declares ${field}, which the Go handler never sends`,
+        );
+    }
+});

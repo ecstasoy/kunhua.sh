@@ -15,6 +15,9 @@ Group=kunhua-api
 EnvironmentFile=/etc/kunhua.sh/api.env
 Environment=APP_DB=/srv/kunhua.sh/data/app.db
 Environment=APP_ADDR=127.0.0.1:8080
+# The site's release symlink, read for its own mtime. Read-only is enough:
+# ProtectSystem=strict leaves the filesystem readable, it only forbids writing.
+Environment=APP_RELEASE_LINK=/srv/kunhua.sh/current
 
 # A symlink, resolved at start. Rolling back is swapping it and restarting.
 ExecStart=/srv/kunhua.sh/api/current/server

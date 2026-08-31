@@ -38,6 +38,9 @@ func run(log *slog.Logger) error {
 	// Loopback, not 0.0.0.0. ufw already blocks 8080, but a bind address holds
 	// even if a firewall rule is edited or a second interface appears.
 	addr := env("APP_ADDR", "127.0.0.1:8080")
+	// The site's release symlink, not the API's own: the homepage reports when
+	// the site last deployed.
+	releaseLink := env("APP_RELEASE_LINK", "/srv/kunhua.sh/current")
 
 	db, err := store.Open(dbPath)
 	if err != nil {
@@ -54,7 +57,7 @@ func run(log *slog.Logger) error {
 
 	srv := &http.Server{
 		Addr:    addr,
-		Handler: server.New(db, log),
+		Handler: server.New(db, log, server.Config{ReleaseLink: releaseLink}),
 		// Without ReadHeaderTimeout a connection that sends half a request
 		// header holds a slot indefinitely.
 		ReadHeaderTimeout: 5 * time.Second,
