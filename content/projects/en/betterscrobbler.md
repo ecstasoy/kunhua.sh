@@ -1,6 +1,6 @@
 ---
-name: "BetterScrobbler"
-summary: "A Last.fm scrobbler for macOS that logs playback from any source. Written first in C++/Objective-C++, later rewritten in Go. The now-playing line on this site comes from it."
+name: BetterScrobbler
+summary: A Last.fm scrobbler for macOS that logs playback from any source. Written first in C++/Objective-C++, later rewritten in Go.
 ---
 
 - **System-wide capture**: macOS has no reliable system-wide scrobbler — Apple Music has none built in and the old plugin approach is deprecated — so this reads the operating system's now-playing state directly. Spotify, Apple Music, YouTube and browsers are all captured, with parser rules skipping anything that is not music
