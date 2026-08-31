@@ -40,7 +40,7 @@ excerpt: A\我要把你狠狠管起来🥵
 - **Go**：我真的很喜欢 Go 啊！后期可以用来实现一些服务
 - **SQLite** + modernc.org/sqlite ：纯 Go 驱动
 - **log/slog**：结构化日志
-- **Docker + Docker compose**，**distroless + GHCR**
+- **systemd**：静态二进制，不用容器
 - **Last.fm API + asciinema**：计划中
 - and more：我想做很多东西……
 

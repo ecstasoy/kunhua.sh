@@ -39,7 +39,7 @@ Planned rather than built:
 - **Go**: I really do like Go. Later on it can run some actual services
 - **SQLite** + modernc.org/sqlite: a pure Go driver
 - **log/slog**: structured logging
-- **Docker + Docker compose**, **distroless + GHCR**
+- **systemd**: a static binary, no containers
 - **Last.fm API + asciinema**: planned
 - and more: there is a lot I want to build…
 

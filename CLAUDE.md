@@ -22,12 +22,13 @@ Two independently-built and independently-deployed halves. Everything runs on a 
 - `content/` — markdown posts. Authored content, not code. `web/` consumes it at build time;
   front-matter is a contract. Album notes are *not* here — they are runtime data, edited in place.
 - `infra/` — Caddyfile and host bootstrap. **No Terraform** — one machine does not justify it.
-- `deploy/` — `docker-compose.yml` and release scripts.
+- `deploy/` — systemd units and release scripts.
 - `.github/` — two path-filtered pipelines (`web/**`+`content/**`, and `api/**`+`deploy/**`). Path
   filtering is correctness, not optimization: editing a post must not restart the Go service.
 
-Runtime is exactly two processes: Caddy (host, systemd) and the Go service (Docker, listening on
-localhost only). Caddy serves static files and reverse-proxies `/api/*`, so front and back are
+Runtime is exactly two processes, both under systemd: Caddy, and the Go service listening on
+localhost only. **No containers** — a static Go binary does not need one, and a root-owned daemon
+would hand the CI identity the root access the two-identity split exists to deny it. Caddy serves static files and reverse-proxies `/api/*`, so front and back are
 same-origin and CORS never enters the picture.
 
 ### Load-bearing constraints
@@ -42,8 +43,8 @@ These are decisions, not defaults — changing one has consequences documented i
   server mode forfeits that isolation.
 - **SQLite is a file, not a service.** Chosen to avoid a second daemon on the box. Plain `database/sql`
   and hand-written SQL, no ORM, so a later Postgres move stays contained.
-- Secrets live in `/srv/kunhua.sh/.env` on the host, never in CI. CI holds only the deploy SSH key and
-  a GHCR token.
+- Secrets live in `/srv/kunhua.sh/.env` on the host, never in CI. CI holds one credential: the deploy
+  SSH key. With no image registry there is no second one to steal.
 
 ## Commands
 
