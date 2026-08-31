@@ -1,0 +1,73 @@
+[Unit]
+Description=kunhua.sh API
+Documentation=https://github.com/ecstasoy/kunhua.sh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=kunhua-api
+Group=kunhua-api
+
+# Secrets come from the host, never from CI. Owned root:kunhua-api 0640 in a
+# directory ci cannot write, so the publishing identity can neither read nor
+# replace it.
+EnvironmentFile=/etc/kunhua.sh/api.env
+Environment=APP_DB=/srv/kunhua.sh/data/app.db
+Environment=APP_ADDR=127.0.0.1:8080
+
+# A symlink, resolved at start. Rolling back is swapping it and restarting.
+ExecStart=/srv/kunhua.sh/api/current/server
+Restart=on-failure
+RestartSec=2s
+
+# Files the service creates — the database above all — are readable only by
+# the service user.
+UMask=0077
+
+# --- Confinement -------------------------------------------------------------
+# No container provides this any more, so every line below is one this project
+# is responsible for. `systemd-analyze security` is in the gate with a floor on
+# the score precisely because deleting any of them leaves the service running,
+# the tests green, and the hardening gone.
+
+# The whole filesystem is read-only, with one carve-out. It is a directory and
+# not the database file: WAL mode writes app.db-wal and app.db-shm beside it,
+# and naming only the file makes the service fail at startup on a read-only
+# filesystem.
+ProtectSystem=strict
+ReadWritePaths=/srv/kunhua.sh/data
+ProtectHome=yes
+PrivateTmp=yes
+
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+ProcSubset=pid
+
+# AF_UNIX and AF_NETLINK look removable for a service that only speaks TCP, but
+# the Go runtime uses them — netlink to enumerate interfaces at startup, unix
+# sockets on some resolver paths. Dropping them is the kind of failure that
+# appears later and elsewhere.
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+# Safe here because Go does not generate code at runtime.
+MemoryDenyWriteExecute=yes
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

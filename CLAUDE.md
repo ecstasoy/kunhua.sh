@@ -44,7 +44,9 @@ These are decisions, not defaults — changing one has consequences documented i
   server mode forfeits that isolation.
 - **SQLite is a file, not a service.** Chosen to avoid a second daemon on the box. Plain `database/sql`
   and hand-written SQL, no ORM, so a later Postgres move stays contained.
-- Secrets live in `/srv/kunhua.sh/.env` on the host, never in CI. CI holds one credential: the deploy
+- Secrets live in `/etc/kunhua.sh/api.env` on the host, never in CI — **not** under `/srv/kunhua.sh/`,
+  which stays group-writable so `ci` can rename the release symlink, and write permission on a
+  directory is permission to delete what is in it. CI holds one credential: the deploy
   SSH key. With no image registry there is no second one to steal.
 
 ## Commands

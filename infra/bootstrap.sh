@@ -13,6 +13,7 @@ set -euo pipefail
 
 DEPLOY_USER=deploy
 CI_USER=ci
+API_USER=kunhua-api
 SITE_GROUP=web
 SITE_ROOT=/srv/kunhua.sh
 
@@ -52,6 +53,15 @@ install -m 600 -o "$CI_USER" -g "$CI_USER" /dev/null "/home/$CI_USER/.ssh/author
 getent group "$SITE_GROUP" >/dev/null || groupadd "$SITE_GROUP"
 usermod -aG "$SITE_GROUP" "$DEPLOY_USER"
 usermod -aG "$SITE_GROUP" "$CI_USER"
+
+# --- api service user --------------------------------------------------------
+# A third identity, deliberately not a member of the web group: it can neither
+# publish nor escalate. deploy administers, ci publishes, this one only runs
+# the service. Compromising the service therefore buys neither of the others.
+
+if ! id "$API_USER" &>/dev/null; then
+  adduser --system --group --no-create-home --shell /usr/sbin/nologin "$API_USER"
+fi
 
 # --- sshd --------------------------------------------------------------------
 
@@ -104,9 +114,54 @@ dpkg-reconfigure -f noninteractive unattended-upgrades
 # layout in one place.
 
 install -d -o "$DEPLOY_USER" -g "$SITE_GROUP" -m 2775 \
-  "$SITE_ROOT" "$SITE_ROOT/releases" "$SITE_ROOT/data" "$SITE_ROOT/backup"
+  "$SITE_ROOT" "$SITE_ROOT/releases" "$SITE_ROOT/backup" \
+  "$SITE_ROOT/api" "$SITE_ROOT/api/releases"
 chgrp -R "$SITE_GROUP" "$SITE_ROOT"
 chmod -R g+w "$SITE_ROOT"
+
+# The database is the one directory the publishing identity must not reach.
+# It is handled after the recursive fixups above rather than alongside the
+# others, because those would otherwise hand it back to the web group on every
+# re-run — a hand-made chown on the machine would not survive the next bootstrap.
+install -d -o "$API_USER" -g "$API_USER" -m 0750 "$SITE_ROOT/data"
+chown -R "$API_USER:$API_USER" "$SITE_ROOT/data"
+chmod -R go-w "$SITE_ROOT/data"
+
+# --- api secrets, unit and the one sudo rule ---------------------------------
+# Secrets do not live under $SITE_ROOT. That directory has to stay
+# group-writable so ci can rename the release symlink, and write permission on
+# a directory is permission to delete what is inside it — a 0640 file there
+# would still be replaceable by ci. /etc is not writable by ci at all.
+
+install -d -m 755 -o root -g root /etc/kunhua.sh
+[ -f /etc/kunhua.sh/api.env ] || \
+  install -m 640 -o root -g "$API_USER" /dev/null /etc/kunhua.sh/api.env
+chown root:"$API_USER" /etc/kunhua.sh/api.env
+chmod 640 /etc/kunhua.sh/api.env
+
+UNIT="$(dirname "$0")/kunhua-api.service"
+if [ -f "$UNIT" ]; then
+  install -m 644 "$UNIT" /etc/systemd/system/kunhua-api.service
+  # Without this the machine keeps running the previous unit: the file changes,
+  # the deploy reports success, and the confinement silently stays as it was.
+  systemctl daemon-reload
+  systemctl enable kunhua-api.service
+fi
+
+# Restarting one named unit is the only privileged thing ci ever does.
+# Not a wildcard, which could restart something else, and not a script — a
+# script ci can edit is a script ci can turn into a root shell.
+echo "$CI_USER ALL=(root) NOPASSWD: /usr/bin/systemctl restart kunhua-api.service" \
+  > /etc/sudoers.d/95-ci-api
+chmod 440 /etc/sudoers.d/95-ci-api
+# A syntax error here disables sudo for everyone, deploy included, and the only
+# way back in is the provider's console. Validate before trusting it.
+visudo -cf /etc/sudoers.d/95-ci-api
+
+# Outbound TLS uses the host trust store. Installing it explicitly rather than
+# relying on the image is the whole of that decision: without it every fetch
+# fails as an unknown certificate authority, which reads like an upstream fault.
+apt-get install -y ca-certificates
 
 # -- caddy --------------------------------------------------------------------
 
