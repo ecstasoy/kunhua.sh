@@ -14,7 +14,7 @@ import (
 
 // Periods are Last.fm's own names, used verbatim as storage keys and in the
 // API this service serves, so no table maps one spelling to another.
-var Periods = []string{"7day", "1month", "12month", "overall"}
+var Periods = []string{"7day", "1month", "3month", "6month", "12month", "overall"}
 
 // TopLimit fills the largest grid the page offers.
 const TopLimit = 25

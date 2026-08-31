@@ -31,6 +31,8 @@ export const REFRESH_MS = 30 * 60_000;
 export const PERIOD_LABELS: Record<string, string> = {
   '7day': '7 days',
   '1month': '1 month',
+  '3month': '3 months',
+  '6month': '6 months',
   '12month': '12 months',
   overall: 'all time',
 };

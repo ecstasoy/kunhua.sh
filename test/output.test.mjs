@@ -442,3 +442,54 @@ test('focusable things have a visible focus style', () => {
         .join('');
     assert.match(css, /:focus-visible\{[^}]*outline:/, 'no :focus-visible outline anywhere');
 });
+
+test('every period the service offers has a label', () => {
+    // The two are declared in different languages, so adding a period on the
+    // Go side alone would put a raw key like "3month" on the page.
+    const go = fs.readFileSync(
+        path.join(import.meta.dirname, '..', 'api', 'internal', 'lastfm', 'albums.go'), 'utf8');
+    const ts = fs.readFileSync(
+        path.join(import.meta.dirname, '..', 'web', 'lib', 'topAlbums.ts'), 'utf8');
+
+    const periods = [...(go.match(/var Periods = \[\]string\{([^}]*)\}/)?.[1] ?? '')
+        .matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+    assert.ok(periods.length >= 4, 'no periods found in albums.go');
+
+    const labels = ts.match(/PERIOD_LABELS[^=]*= \{([^}]*)\}/)?.[1] ?? '';
+    for (const p of periods) {
+        assert.ok(
+            new RegExp(`['"]?${p}['"]?\\s*:`).test(labels),
+            `the service offers the period ${p}, which PERIOD_LABELS does not name`,
+        );
+    }
+});
+
+test('the built stylesheet contains no declaration a browser will drop', () => {
+    // Both of these shipped. repeat(min(var(--cols), 3), 1fr) is not a valid
+    // track list, so the mobile grid silently fell back to the desktop rule;
+    // and the minifier turns saturate(1) into saturate(), which is invalid, so
+    // the hover that restores a cover's colour did nothing in production while
+    // working in development.
+    const css = fs
+        .readdirSync(path.join(OUT, '_next/static/chunks'))
+        .filter((f) => f.endsWith('.css'))
+        .map((f) => fs.readFileSync(path.join(OUT, '_next/static/chunks', f), 'utf8'))
+        .join('');
+
+    // A CSS function with no argument at all.
+    const empty = css.match(/\b(saturate|blur|grayscale|brightness|contrast|scale|translate|rotate)\(\)/g);
+    assert.deepEqual(empty, null, `functions called with no argument: ${empty}`);
+
+    // repeat()'s first argument must be an integer, auto-fill or auto-fit.
+    // Searched across the whole file rather than per declaration: the minifier
+    // keeps an invalid form as a second declaration beside a valid one, where
+    // it wins by being last and the valid one is only a decoy.
+    const counts = [...css.matchAll(/repeat\(\s*([^,]+),/g)]
+        .map((m) => m[1].trim())
+        .filter((c) => !/^(\d+|auto-fill|auto-fit)$/.test(c));
+    assert.deepEqual(
+        [...new Set(counts)],
+        [],
+        `repeat() counts that are not an integer or auto-fill/auto-fit: ${counts}`,
+    );
+});

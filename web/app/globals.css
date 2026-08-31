@@ -391,11 +391,13 @@ pre code {
 
 .topster {
   display: grid;
-  /* The cover's own size, so the first column starts where the now-playing
-     cover does rather than being stretched to fill. */
-  grid-template-columns: repeat(var(--cols), var(--cover));
+  /* auto-fill against a width that is exactly N covers wide, rather than
+     repeat(var(--cols), …): repeat() takes an integer and a var() is not one,
+     so that form was dropped and the column count was whatever the content
+     happened to produce. */
+  grid-template-columns: repeat(auto-fill, var(--cover));
   gap: 6px;
-  width: fit-content;
+  width: calc(var(--cols) * var(--cover) + (var(--cols) - 1) * 6px);
   list-style: none;
   padding: 0;
   margin: 0;
@@ -429,7 +431,10 @@ pre code {
 .cover:hover .cover-blank,
 .cover:focus-within .cover-img,
 .cover:focus-within .cover-blank {
-  filter: saturate(1);
+  /* `none`, not `saturate(1)`: the minifier shortens that to `saturate()`,
+     which is invalid, and the declaration is dropped — hover restored nothing
+     in the built stylesheet while working in development. */
+  filter: none;
 }
 
 .cover-blank {
@@ -466,18 +471,18 @@ pre code {
 }
 
 @media (max-width: 620px) {
-  /* Full width, since three columns of a fixed size would not fill it. */
+  /* A literal count, and one rule rather than two. repeat() takes an integer
+     and repeat(min(var(--cols), 3), …) is not one, so the declaration was
+     dropped and the phone fell back to five fixed 56px columns with the names
+     crammed underneath.
+
+     Three columns whatever the chosen size: the size still decides how many
+     albums are shown, and covers fill the width rather than leaving most of a
+     phone empty. */
   .topster {
-    /* Fill the width instead: three fixed 56px covers would leave most of a
-       phone screen empty. */
-    grid-template-columns: repeat(min(var(--cols), 3), 1fr);
-    width: auto;
-  }
-  /* Five columns on a phone is a 66px cover: too small to read and too narrow
-     to tap. The chosen size still ranks how many albums are shown. */
-  .topster {
-    grid-template-columns: repeat(min(var(--cols), 3), 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px 8px;
+    width: auto;
   }
   .cover {
     /* The cover keeps its square; the name sits below it. */
