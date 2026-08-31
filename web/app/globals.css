@@ -332,22 +332,20 @@ pre code {
 /* --- Topster -------------------------------------------------------------
    A grid of album covers whose column count the reader chooses. */
 
-/* The cover size is fixed and the grid widens with the count, rather than the
-   other way round: the control chooses how many albums to see, not how big
-   they are. Sizing the grid instead made a 3×3 cover 302px and a 5×5 one
-   179px, which reads as three different components.
+/* Sized to sit in the content column like everything else on the page. Letting
+   it break out past the rail and the measure made it the widest thing on the
+   page, starting further left than any other block: it read as a slab from a
+   different layout rather than a section of this one.
 
-   Still allowed past the 700px reading measure, since 5×5 needs 764px and a
-   line of text is the wrong constraint for a picture. Bounded by the viewport,
-   so it can never produce a horizontal scrollbar. */
+   The cover is fixed and the grid widens with the count, so the control
+   chooses how many albums to see rather than how big they are. 108px is what
+   makes 5×5 fit the column exactly. */
 .topster-bleed {
-  --cover: 148px;
-  --topster-width: min(
+  --cover: 108px;
+  width: min(
     calc(var(--cols) * var(--cover) + (var(--cols) - 1) * 6px),
-    calc(100vw - 44px)
+    100%
   );
-  grid-column: 1 / -1;
-  width: var(--topster-width);
 }
 
 .topster-controls {
@@ -468,9 +466,9 @@ pre code {
 }
 
 @media (max-width: 620px) {
-  /* Already as wide as it gets; a fixed cover size would overflow. */
+  /* Full width, since three columns of a fixed size would not fill it. */
   .topster-bleed {
-    --topster-width: 100%;
+    width: 100%;
   }
   /* Five columns on a phone is a 66px cover: too small to read and too narrow
      to tap. The chosen size still ranks how many albums are shown. */
