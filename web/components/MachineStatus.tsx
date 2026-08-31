@@ -18,6 +18,10 @@ type Snapshot = { status: Status; at: number };
 /**
  * Uptime and last deploy, read from the service at view time.
  *
+ * Lives in the colophon beside the copyright. These are footnotes about the
+ * machine, not something the page is about; giving them a section of their own
+ * at the top said the opposite.
+ *
  * The site is a static export, so this is the only way a runtime fact reaches a
  * page — and the point of the first such line is the case where the answer
  * never comes. The service can be stopped and this page still serves: the
@@ -76,27 +80,29 @@ export function MachineStatus() {
       : PLACEHOLDER;
 
   return (
-    <p
+    <span
       {...{ [STATUS_ATTR]: fresh ? 'live' : 'unavailable' }}
-      style={{
-        fontSize: 'var(--text-meta)',
-        color: 'var(--faint)',
-        margin: 0,
-        fontVariantNumeric: 'tabular-nums',
-      }}
+      // Inherits the colophon's size and colour rather than setting its own:
+      // it belongs to that line, not beside it.
+      style={{ fontVariantNumeric: 'tabular-nums' }}
     >
       {uptime}
       <span style={{ color: 'var(--rule)' }}> · </span>
       {deployed}
-      {/* How current the reading is, not how current the machine is. Without
-          it a number on screen carries no claim about when it was true, and
-          the only way to notice it had frozen would be to already know what it
-          should say. */}
-      <span style={{ color: 'var(--rule)' }}>
-        {fresh && now !== null
-          ? ` · read ${formatSince(snapshot.at, now)}`
-          : ' · service unreachable'}
-      </span>
-    </p>
+      {/* How current the reading is, not how current the machine is: a number
+          that had silently frozen would otherwise look identical to one
+          updating every minute.
+
+          Shown only once a refresh has been missed. Saying "read just now" on
+          every view spends a third of the line on the one case where nothing
+          is wrong, and a freshness note that is always present is one nobody
+          reads when it finally changes. */}
+      {fresh && now !== null && now - snapshot.at > REFRESH_MS && (
+        <span style={{ color: 'var(--rule)' }}>
+          {` · read ${formatSince(snapshot.at, now)}`}
+        </span>
+      )}
+      {!fresh && <span style={{ color: 'var(--rule)' }}> · unreachable</span>}
+    </span>
   );
 }

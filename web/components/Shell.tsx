@@ -1,6 +1,7 @@
 import { GitHubIcon, MailIcon } from '@/components/Icons';
 import { EmailLink } from '@/components/Email';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { MachineStatus } from '@/components/MachineStatus';
 import { path, other, switchLabel, type Locale } from '@/lib/locale';
 
 /**
@@ -43,7 +44,13 @@ export function Shell({
         </nav>
       </header>
       {children}
-      <footer className="colophon mono">© 2026 Kunhua Huang</footer>
+      {/* The machine's own facts sit with the copyright: a colophon is where
+          a page says what produced it. */}
+      <footer className="colophon mono">
+        © 2026 Kunhua Huang
+        <span aria-hidden> · </span>
+        <MachineStatus />
+      </footer>
     </div>
   );
 }

@@ -271,28 +271,35 @@ test('every internal fragment link lands on an element that exists', () => {
 });
 
 
-test('the homepage carries the machine line in its unavailable state', () => {
+test('every page carries the machine line in its unavailable state', () => {
     // The static export is what keeps the site up when the service is not, so
     // the degraded path is the one that ships. Asserting it here covers it in
     // the build rather than relying on someone remembering to stop the service
     // and look — which is how "renders without the service" quietly stops
     // being true.
-    for (const home of ['index.html', 'en/index.html']) {
-        const html = read(home);
+    //
+    // Every page, not just the homepage: the line lives in the colophon now,
+    // so a page that lost the shell would lose it too.
+    let checked = 0;
+    for (const file of everyPage().filter((f) => !/404|_not-found/.test(f))) {
+        const home = path.relative(OUT, file);
+        const html = fs.readFileSync(file, 'utf8');
         assert.match(
             html,
             /data-machine-status="unavailable"/,
             `${home}: no machine line, or it was emitted as if live`,
         );
         // The em dash placeholder, twice: uptime and deploy time.
-        const placeholders = html.match(/data-machine-status="unavailable"[^]*?<\/p>/)?.[0] ?? '';
+        const placeholders = html.match(/data-machine-status="unavailable"[^]*?<\/footer>/)?.[0] ?? '';
         assert.equal(
             (placeholders.match(/—/g) ?? []).length,
             2,
             `${home}: expected a placeholder for both values`,
         );
-        assert.match(placeholders, /service unreachable/, `${home}: no explanation`);
+        assert.match(placeholders, /unreachable/, `${home}: no explanation`);
+        checked++;
     }
+    assert.ok(checked > 1, 'expected the line on more than one page');
 });
 
 test('the machine line names no value the service does not send', () => {
