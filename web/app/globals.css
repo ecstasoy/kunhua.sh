@@ -333,22 +333,21 @@ pre code {
    A grid of album covers whose column count the reader chooses. */
 
 /* One cover size for both music sections, so the grid and the now-playing
-   thumbnail read as the same thing at the same scale. The grid widens with the
-   count and is centred in the column: the control chooses how many albums to
-   see, not how big they are. */
+   thumbnail read as the same thing at the same scale. */
 :root {
   --cover: 56px;
 }
 
+/* The wrapper stays full width and only the grid is sized. Constraining the
+   wrapper meant the controls were squeezed into the grid's width — at 3×3 that
+   is 180px, and the period buttons wrapped a word per line. */
 .topster-bleed {
-  width: min(calc(var(--cols) * var(--cover) + (var(--cols) - 1) * 6px), 100%);
-  margin-inline: auto;
+  width: 100%;
 }
 
 .topster-controls {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 14px;
   margin-bottom: 10px;
 }
@@ -392,9 +391,11 @@ pre code {
 
 .topster {
   display: grid;
-  grid-template-columns: repeat(var(--cols), 1fr);
-  /* Wider covers can afford a visible gutter; at 111px they could not. */
+  /* The cover's own size, so the first column starts where the now-playing
+     cover does rather than being stretched to fill. */
+  grid-template-columns: repeat(var(--cols), var(--cover));
   gap: 6px;
+  width: fit-content;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -442,7 +443,6 @@ pre code {
 .topster-caption {
   font-size: var(--text-meta);
   color: var(--soft);
-  text-align: center;
   margin: 8px 0 0;
   /* Fixed height, so moving across the grid does not shift the page. */
   min-height: 1.4em;
@@ -467,11 +467,11 @@ pre code {
 
 @media (max-width: 620px) {
   /* Full width, since three columns of a fixed size would not fill it. */
-  .topster-bleed {
-    width: 100%;
-  }
-  .topster-controls {
-    justify-content: center;
+  .topster {
+    /* Fill the width instead: three fixed 56px covers would leave most of a
+       phone screen empty. */
+    grid-template-columns: repeat(min(var(--cols), 3), 1fr);
+    width: auto;
   }
   /* Five columns on a phone is a 66px cover: too small to read and too narrow
      to tap. The chosen size still ranks how many albums are shown. */
