@@ -3,39 +3,32 @@ package host
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 )
 
-func TestUptimeReadsTheKernelCounter(t *testing.T) {
-	dir := t.TempDir()
-	f := filepath.Join(dir, "uptime")
-	// The real file's shape: uptime and idle time, space separated.
-	if err := os.WriteFile(f, []byte("5400.42 12345.67\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	old := UptimeFile
-	UptimeFile = f
-	t.Cleanup(func() { UptimeFile = old })
-
+func TestUptimeAnswersOnLinuxAndAdmitsItElsewhere(t *testing.T) {
 	got, err := Uptime()
+
+	if runtime.GOOS != "linux" {
+		// No pretending. A zero would render as "up 0m", which reads as a
+		// reboot that never happened.
+		if err == nil {
+			t.Errorf("Uptime = %v with no error on %s", got, runtime.GOOS)
+		}
+		return
+	}
+
 	if err != nil {
 		t.Fatalf("Uptime: %v", err)
 	}
-	if want := 5400 * time.Second; got.Round(time.Second) != want {
-		t.Errorf("Uptime = %v, want %v", got, want)
+	if got <= 0 {
+		t.Errorf("Uptime = %v, want a positive duration", got)
 	}
-}
-
-func TestUptimeFailsRatherThanGuessing(t *testing.T) {
-	// Every machine without /proc takes this path, including the one this is
-	// written on. A zero would be worse than an error: it renders.
-	old := UptimeFile
-	UptimeFile = filepath.Join(t.TempDir(), "absent")
-	t.Cleanup(func() { UptimeFile = old })
-
-	if _, err := Uptime(); err == nil {
-		t.Error("expected an error when the counter is unreadable")
+	// Sanity, not precision: the machine running this booted at some point.
+	if got > 100*365*24*time.Hour {
+		t.Errorf("Uptime = %v, which is not a plausible machine", got)
 	}
 }
 
@@ -67,5 +60,11 @@ func TestSymlinkTimeReportsTheLinkNotItsTarget(t *testing.T) {
 	}
 	if time.Since(got) > time.Minute {
 		t.Errorf("SymlinkTime = %v: it followed the link to a target dated %v", got, week)
+	}
+}
+
+func TestSymlinkTimeFailsWhenTheLinkIsMissing(t *testing.T) {
+	if _, err := SymlinkTime(filepath.Join(t.TempDir(), "absent")); err == nil {
+		t.Error("expected an error for a link that does not exist")
 	}
 }

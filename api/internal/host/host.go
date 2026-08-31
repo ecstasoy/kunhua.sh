@@ -4,37 +4,26 @@
 package host
 
 import (
-	"fmt"
 	"os"
-	"strconv"
-	"strings"
 	"time"
 )
 
-// UptimeFile is where Linux keeps the kernel's own counter. It is a variable so
-// tests can point at a fixture; there is no other reason to change it.
-var UptimeFile = "/proc/uptime"
-
-// Uptime reports how long the machine has been up, straight from the kernel.
+// Uptime reports how long the machine has been up, asked of the kernel.
 //
 // Not derived from the service's own start time: restarting the service must
-// not make the machine look like it just rebooted. On anything without /proc —
-// a developer's macOS, say — this returns an error, and the page shows its
-// placeholder. That is the degraded path being exercised in development rather
-// than only in production.
-func Uptime() (time.Duration, error) {
-	b, err := os.ReadFile(UptimeFile)
-	if err != nil {
-		return 0, err
-	}
-	// "12345.67 89012.34" — uptime first, idle time second.
-	first, _, _ := strings.Cut(strings.TrimSpace(string(b)), " ")
-	secs, err := strconv.ParseFloat(first, 64)
-	if err != nil {
-		return 0, fmt.Errorf("parse %s: %w", UptimeFile, err)
-	}
-	return time.Duration(secs * float64(time.Second)), nil
-}
+// not make the machine look like it just rebooted.
+//
+// The obvious source, /proc/uptime, is unreadable to this service by design —
+// the unit sets ProcSubset=pid, which hides everything in /proc that is not a
+// process directory. Reading it returned "no such file" and the page showed a
+// placeholder, with nothing failing anywhere. Rather than drop the constraint
+// to fit the feature, the platform implementations below ask the kernel
+// directly; see host_linux.go.
+//
+// Where there is no such call the error is returned and the page shows its
+// placeholder, which means a developer meets the degraded path daily instead
+// of first meeting it in production.
+func Uptime() (time.Duration, error) { return uptime() }
 
 // SymlinkTime reports when a symlink was last written — for the release link,
 // the moment of the swap that put a build live.
