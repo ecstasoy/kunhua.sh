@@ -68,7 +68,10 @@ export function NowPlaying() {
   return (
     <span {...{ [NOW_PLAYING_ATTR]: v.kind }}>
       <span aria-hidden> · </span>
-      {v.kind === 'live' && !v.playing && 'last played '}
+      {/* "Playing" is the one claim that can be wrong. It is made only when
+          the fetch is current and Last.fm said so; a stale entry says "last
+          played", which stays true however old it is. */}
+      {!(v.kind === 'live' && v.playing) && 'last played '}
       {url ? (
         <a href={url} rel="noopener noreferrer">
           {label}
