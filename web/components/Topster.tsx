@@ -38,7 +38,7 @@ function Cover({ album, onFocus }: { album: Album; onFocus: () => void }) {
   );
 
   return (
-    <li className="cover" title={label} onMouseEnter={onFocus} onFocus={onFocus}>
+    <li className="cover" onMouseEnter={onFocus} onFocus={onFocus}>
       {album.url ? (
         <a href={album.url} rel="noopener noreferrer" aria-label={label}>
           {inner}
@@ -46,6 +46,15 @@ function Cover({ album, onFocus }: { album: Album; onFocus: () => void }) {
       ) : (
         inner
       )}
+      {/* Named under the cover as well as in the caption. The caption is
+          driven by hover and focus, neither of which a phone has: without
+          this, a touch reader sees twenty-five unlabelled squares. Hidden on
+          wider screens, where the caption does the job without crowding the
+          grid. */}
+      <span className="cover-name" aria-hidden>
+        <span className="cover-album">{album.album}</span>
+        <span className="cover-artist">{album.artist}</span>
+      </span>
     </li>
   );
 }

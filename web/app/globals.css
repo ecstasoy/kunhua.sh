@@ -3,7 +3,7 @@
   --ink: #191817;
   --muted: #6b6660;
   --soft: #5d5852;
-  --faint: #9c968d;
+  --faint: #78726a;
   --rule: #e4e1db;
   --accent: #a8391c;
 
@@ -275,7 +275,7 @@ a:hover {
   --ink: #e6e1d6;
   --muted: #8f887c;
   --soft: #b3ac9f;
-  --faint: #6f695f;
+  --faint: #8a8377;
   --rule: #2c2a25;
   --rule-strong: #e6e1d6;
   /* The light accent is a dark oxide red and all but disappears here. */
@@ -350,9 +350,14 @@ pre code {
   color: var(--faint);
   background: none;
   border: 0;
-  padding: 0;
+  /* A tap target, not just a word: the label alone is about 16px tall, well
+     under what a thumb can hit. The negative margin keeps the row visually
+     tight while the hit area stays large. */
+  padding: 12px 6px;
+  margin: -12px -2px;
   cursor: pointer;
   border-bottom: 1px solid transparent;
+  background-clip: padding-box;
 }
 
 .topster-group button:hover {
@@ -361,7 +366,14 @@ pre code {
 
 .topster-group button.chosen {
   color: var(--ink);
-  border-bottom-color: var(--rule);
+}
+/* The underline is drawn on the text rather than the padded box, which would
+   float it well below the word. */
+.topster-group button.chosen span,
+.topster-group button.chosen {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--rule);
 }
 
 .topster {
@@ -428,4 +440,68 @@ pre code {
   .cover-blank {
     transition: none;
   }
+}
+
+/* The caption below the grid answers hover and focus, so the per-cover name is
+   redundant on a pointer device and would crowd the grid. */
+.cover-name {
+  display: none;
+}
+
+@media (max-width: 620px) {
+  /* Five columns on a phone is a 66px cover: too small to read and too narrow
+     to tap. The chosen size still ranks how many albums are shown. */
+  .topster {
+    grid-template-columns: repeat(min(var(--cols), 3), 1fr);
+    gap: 10px 8px;
+  }
+  .cover {
+    /* The cover keeps its square; the name sits below it. */
+    aspect-ratio: auto;
+  }
+  .cover a,
+  .cover > .cover-img,
+  .cover > .cover-blank {
+    aspect-ratio: 1;
+  }
+  .cover-name {
+    display: block;
+    margin-top: 4px;
+    font-size: var(--text-nano);
+    line-height: 1.35;
+  }
+  .cover-album {
+    display: block;
+    color: var(--soft);
+    /* Two lines at most: album names are long and the grid must stay a grid. */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .cover-artist {
+    display: block;
+    color: var(--faint);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  /* Nothing hovers on a phone, so the covers stay as they are. */
+  .cover-img,
+  .cover-blank {
+    filter: saturate(0.3);
+  }
+}
+
+/* ── Focus ─────────────────────────────────────────────────────────────────
+   There was none anywhere on the site. Links are underlined, so a keyboard
+   user could follow them, but covers and buttons have their border removed
+   and were effectively invisible when focused. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+.cover a:focus-visible {
+  outline-offset: -2px;
 }

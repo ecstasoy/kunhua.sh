@@ -87,7 +87,7 @@ export function MachineStatus() {
       style={{ fontVariantNumeric: 'tabular-nums' }}
     >
       {uptime}
-      <span style={{ color: 'var(--rule)' }}> · </span>
+      <span aria-hidden> · </span>
       {deployed}
       {/* How current the reading is, not how current the machine is: a number
           that had silently frozen would otherwise look identical to one
@@ -98,11 +98,9 @@ export function MachineStatus() {
           is wrong, and a freshness note that is always present is one nobody
           reads when it finally changes. */}
       {fresh && now !== null && now - snapshot.at > REFRESH_MS && (
-        <span style={{ color: 'var(--rule)' }}>
-          {` · read ${formatSince(snapshot.at, now)}`}
-        </span>
+        <span>{` · read ${formatSince(snapshot.at, now)}`}</span>
       )}
-      {!fresh && <span style={{ color: 'var(--rule)' }}> · unreachable</span>}
+      {!fresh && <span> · unreachable</span>}
     </span>
   );
 }

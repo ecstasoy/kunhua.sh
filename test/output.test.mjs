@@ -377,3 +377,68 @@ test('the top-albums contract names nothing the service does not send', () => {
         }
     }
 });
+
+test('every text colour meets WCAG AA against the page', () => {
+    // Written after --rule, a border colour, was used as text at 1.31:1 —
+    // the words "service unreachable" were invisible, on a line whose entire
+    // purpose is making a failure visible. Computed rather than eyeballed.
+    const css = fs
+        .readdirSync(path.join(OUT, '_next/static/chunks'))
+        .filter((f) => f.endsWith('.css'))
+        .map((f) => fs.readFileSync(path.join(OUT, '_next/static/chunks', f), 'utf8'))
+        .join('');
+
+    // The minifier shortens #ffffff to #fff, so both forms have to parse.
+    const expand = (hex) =>
+        hex.length === 4 ? '#' + [...hex.slice(1)].map((c) => c + c).join('') : hex;
+
+    const luminance = (hex) => {
+        const n = parseInt(expand(hex).slice(1), 16);
+        return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+            .map((c) => {
+                const v = c / 255;
+                return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+            })
+            .reduce((acc, c, i) => acc + [0.2126, 0.7152, 0.0722][i] * c, 0);
+    };
+    const ratio = (a, b) => {
+        const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+        return (hi + 0.05) / (lo + 0.05);
+    };
+
+    const tokensIn = (block) =>
+        Object.fromEntries(
+            [...block.matchAll(/--([\w-]+):\s*(#[0-9a-f]{3,6})\b/gi)].map((m) => [m[1], m[2]]),
+        );
+
+    const light = tokensIn(css.match(/:root\{([^}]*)\}/)?.[1] ?? '');
+    const darkBlock = css.match(/\[data-theme=["']?dark["']?\]\{([^}]*)\}/)?.[1] ?? '';
+    const dark = { ...light, ...tokensIn(darkBlock) };
+    assert.ok(light.paper && light.ink, 'no palette found in the emitted CSS');
+
+    // Tokens used as text somewhere. --rule is deliberately absent: it is a
+    // border and background colour, and using it as text is the bug this
+    // test exists for.
+    const textTokens = ['ink', 'soft', 'muted', 'faint', 'accent'];
+    for (const [theme, palette] of [['light', light], ['dark', dark]]) {
+        for (const token of textTokens) {
+            const r = ratio(palette[token], palette.paper);
+            assert.ok(
+                r >= 4.5,
+                `${theme}: --${token} (${palette[token]}) on --paper is ${r.toFixed(2)}:1, below AA's 4.5:1`,
+            );
+        }
+    }
+});
+
+test('focusable things have a visible focus style', () => {
+    // Links carry an underline, but covers and buttons have their border
+    // removed and were invisible when focused: the site had no :focus-visible
+    // rule at all.
+    const css = fs
+        .readdirSync(path.join(OUT, '_next/static/chunks'))
+        .filter((f) => f.endsWith('.css'))
+        .map((f) => fs.readFileSync(path.join(OUT, '_next/static/chunks', f), 'utf8'))
+        .join('');
+    assert.match(css, /:focus-visible\{[^}]*outline:/, 'no :focus-visible outline anywhere');
+});
