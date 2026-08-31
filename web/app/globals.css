@@ -332,6 +332,20 @@ pre code {
 /* --- Topster -------------------------------------------------------------
    A grid of album covers whose column count the reader chooses. */
 
+/* The grid escapes the reading measure. 700px is the width of a line of text,
+   which is the wrong constraint for a picture: inside the hanging layout the
+   grid had 568px, making a 5×5 cover 111px.
+   
+   920px is set by the source: Last.fm serves 300px covers, and at this width a
+   3×3 cell is 302px, so nothing is upscaled by more than a rounding error.
+   Bounded by the viewport, so it never causes a horizontal scrollbar. */
+.topster-bleed {
+  --topster-width: min(920px, calc(100vw - 44px));
+  grid-column: 1 / -1;
+  width: var(--topster-width);
+  margin-left: calc((100% - var(--topster-width)) / 2);
+}
+
 .topster-controls {
   display: flex;
   flex-wrap: wrap;
@@ -379,7 +393,8 @@ pre code {
 .topster {
   display: grid;
   grid-template-columns: repeat(var(--cols), 1fr);
-  gap: 3px;
+  /* Wider covers can afford a visible gutter; at 111px they could not. */
+  gap: 6px;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -449,6 +464,11 @@ pre code {
 }
 
 @media (max-width: 620px) {
+  /* Already full width on a phone; the breakout would only add a scrollbar. */
+  .topster-bleed {
+    --topster-width: 100%;
+    margin-left: 0;
+  }
   /* Five columns on a phone is a 66px cover: too small to read and too narrow
      to tap. The chosen size still ranks how many albums are shown. */
   .topster {

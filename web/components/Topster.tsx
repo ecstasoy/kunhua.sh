@@ -25,7 +25,16 @@ import {
 function Cover({ album, onFocus }: { album: Album; onFocus: () => void }) {
   const label = `${album.album} — ${album.artist}`;
   const inner = album.art ? (
-    <img src={album.art} alt={label} loading="lazy" className="cover-img" />
+    <img
+      src={album.art}
+      alt={label}
+      /* Intrinsic size, so the grid does not reflow as covers arrive. */
+      width={300}
+      height={300}
+      loading="lazy"
+      decoding="async"
+      className="cover-img"
+    />
   ) : (
     <span
       className="cover-blank"
@@ -127,7 +136,7 @@ export function Topster() {
 
   return (
     <HangingSection label="Albums">
-      <div {...{ [TOP_ALBUMS_ATTR]: 'live' }}>
+      <div className="topster-bleed" {...{ [TOP_ALBUMS_ATTR]: 'live' }}>
         <div className="topster-controls">
           <span className="topster-group">
             {periods.map((p) => (
