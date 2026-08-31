@@ -19,7 +19,7 @@ const fetchLimit = 50
 func (c *Client) Job(db *store.DB, arts art.Store) job.Job {
 	return job.Job{
 		Name:     JobName,
-		Every:    time.Minute,
+		Every:    30 * time.Second,
 		Timeout:  10 * time.Second,
 		Attempts: 3,
 		Backoff:  2 * time.Second,
