@@ -77,7 +77,7 @@ check_web() {
   # when a track stops being current is separable from its rendering precisely
   # so it can be tested at all.
   echo "→ view logic"
-  node --test test/nowPlaying.test.ts
+  node --test test/nowPlaying.test.ts test/topAlbums.test.ts
 
   echo "→ release.sh"
   node --test test/release.test.mjs

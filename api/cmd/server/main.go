@@ -122,7 +122,8 @@ func startJobs(ctx context.Context, db *store.DB, log *slog.Logger, arts art.Sto
 	}
 
 	log.Info("last.fm configured", "user", user)
-	return job.Start(ctx, db, log, lastfm.New(key, user).Job(db, arts))
+	c := lastfm.New(key, user)
+	return job.Start(ctx, db, log, c.Job(db, arts), c.TopJob(db, arts))
 }
 
 func env(key, def string) string {

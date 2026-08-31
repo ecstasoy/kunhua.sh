@@ -349,3 +349,31 @@ test('the now-playing contract names nothing the service does not send', () => {
             `web/lib/nowPlaying.ts declares ${field}, which the Go handler never sends`);
     }
 });
+
+test('both homepages ship the topster in its empty state', () => {
+    // Nothing is fetched at build time, so what ships is the state with no
+    // grid at all: no heading, no controls, no reserved space. A grid of
+    // placeholder squares would claim data that is not there.
+    for (const home of ['index.html', 'en/index.html']) {
+        const html = read(home);
+        assert.match(html, /data-top-albums="none"/, `${home}: shipped as if albums were known`);
+        assert.doesNotMatch(html, />Albums</, `${home}: heading rendered with nothing under it`);
+    }
+});
+
+test('the top-albums contract names nothing the service does not send', () => {
+    const contract = fs.readFileSync(
+        path.join(import.meta.dirname, '..', 'web', 'lib', 'topAlbums.ts'), 'utf8');
+    const handler = fs.readFileSync(
+        path.join(import.meta.dirname, '..', 'api', 'internal', 'server', 'topalbums.go'), 'utf8');
+
+    for (const [, type] of [['', 'TopAlbums'], ['', 'Album']]) {
+        const body = contract.match(new RegExp(`export type ${type} = \\{([^]*?)\\};`))?.[1] ?? '';
+        const fields = [...body.matchAll(/^\s{2}(\w+):/gm)].map((m) => m[1]);
+        assert.ok(fields.length >= 3, `no fields found in ${type}`);
+        for (const field of fields) {
+            assert.match(handler, new RegExp(`json:"${field}"`),
+                `web/lib/topAlbums.ts declares ${type}.${field}, which the Go handler never sends`);
+        }
+    }
+});

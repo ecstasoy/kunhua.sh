@@ -3,6 +3,7 @@ import { getAllProjects } from '@/lib/projects';
 import { HangingSection, HangingRow } from '@/components/HangingSection';
 import { Untranslated } from '@/components/Untranslated';
 import { NowPlaying } from '@/components/NowPlaying';
+import { Topster } from '@/components/Topster';
 import { DEFAULT_LOCALE, path, type Locale } from '@/lib/locale';
 
 export function Home({ locale }: { locale: Locale }) {
@@ -74,6 +75,8 @@ export function Home({ locale }: { locale: Locale }) {
       </HangingSection>
 
       <NowPlaying />
+
+      <Topster />
     </div>
   );
 }

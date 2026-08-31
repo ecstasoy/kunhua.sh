@@ -48,6 +48,7 @@ func New(db *store.DB, log *slog.Logger, cfg Config) http.Handler {
 	mux.HandleFunc("GET /api/healthz", health(db))
 	mux.HandleFunc("GET /api/status", status(cfg))
 	mux.HandleFunc("GET /api/now-playing", nowPlaying(db, cfg))
+	mux.HandleFunc("GET /api/top-albums", topAlbums(db, cfg))
 	mux.HandleFunc("GET /api/art/{hash}", serveArt(cfg.Art))
 
 	// Middleware order matters:
