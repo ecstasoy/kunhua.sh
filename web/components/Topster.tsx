@@ -136,7 +136,11 @@ export function Topster() {
 
   return (
     <HangingSection label="Albums">
-      <div className="topster-bleed" {...{ [TOP_ALBUMS_ATTR]: 'live' }}>
+      <div
+        className="topster-bleed"
+        style={{ '--cols': size } as React.CSSProperties}
+        {...{ [TOP_ALBUMS_ATTR]: 'live' }}
+      >
         <div className="topster-controls">
           <span className="topster-group">
             {periods.map((p) => (
@@ -167,11 +171,7 @@ export function Topster() {
           </span>
         </div>
 
-        <ul
-          className="topster"
-          style={{ '--cols': size } as React.CSSProperties}
-          onMouseLeave={() => setFocused(0)}
-        >
+        <ul className="topster" onMouseLeave={() => setFocused(0)}>
           {albums.map((a, i) => (
             <Cover
               key={`${a.artist}-${a.album}-${i}`}
