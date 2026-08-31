@@ -5,8 +5,10 @@
 # zero-config here and need mounted volumes otherwise.
 
 kunhua.sh {
-	# The Go service does not exist yet — this 502s until it does. Configured
-	# now so the server config is not revisited when it arrives.
+	# The path is not stripped, so the service registers /api/... itself.
+	# Cache headers are deliberately absent here: the service sets its own, and
+	# an unscoped one at site level was being appended to them rather than
+	# replacing them, leaving two Cache-Control headers on every API response.
 	handle /api/* {
 		reverse_proxy localhost:8080
 	}
@@ -15,20 +17,21 @@ kunhua.sh {
 	# service, so playback survives the service being down.
 	handle /casts/* {
 		root * /srv/kunhua.sh/data
+		header Cache-Control "public, max-age=0, must-revalidate"
 		file_server
 	}
 
 	handle {
 		root * /srv/kunhua.sh/current
+		# Build output is content-hashed, so it can be cached forever.
+		# Everything else must revalidate, or a release swap would not be
+		# visible.
+		header /_next/static/* Cache-Control "public, max-age=31536000, immutable"
+		header Cache-Control "public, max-age=0, must-revalidate"
 		file_server
 	}
 
 	encode zstd gzip
-
-	# Build output is content-hashed, so it can be cached forever. Everything
-	# else must revalidate, or a release swap would not be visible.
-	header /_next/static/* Cache-Control "public, max-age=31536000, immutable"
-	header Cache-Control "public, max-age=0, must-revalidate"
 
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
