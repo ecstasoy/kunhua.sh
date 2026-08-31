@@ -352,41 +352,41 @@ pre code {
   margin-bottom: 10px;
 }
 
-.topster-group {
-  display: flex;
-  gap: 8px;
-}
-
-.topster-group button {
+/* Kept as a native select rather than a styled listbox: the platform's own
+   picker, keyboard handling and tap target are all better than a rebuild. Only
+   the chrome is removed, and the caret redrawn to match the page. */
+.topster-select select {
   font: inherit;
   font-size: var(--text-meta);
-  color: var(--faint);
+  color: var(--soft);
   background: none;
   border: 0;
-  /* A tap target, not just a word: the label alone is about 16px tall, well
-     under what a thumb can hit. The negative margin keeps the row visually
-     tight while the hit area stays large. */
-  padding: 12px 6px;
-  margin: -12px -2px;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  appearance: none;
+  padding: 4px 18px 4px 0;
   cursor: pointer;
-  border-bottom: 1px solid transparent;
-  background-clip: padding-box;
+  /* An inline SVG caret rather than two gradients: gradients are on the
+     prohibited list, and one triangle does not need three declarations. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4'%3E%3Cpath d='M0 0h7L3.5 4z' fill='%239c968d'/%3E%3C/svg%3E");
+  background-position: right 2px center;
+  background-repeat: no-repeat;
 }
 
-.topster-group button:hover {
-  color: var(--soft);
-}
-
-.topster-group button.chosen {
+.topster-select select:hover {
   color: var(--ink);
+  border-bottom-color: var(--ink);
 }
-/* The underline is drawn on the text rather than the padded box, which would
-   float it well below the word. */
-.topster-group button.chosen span,
-.topster-group button.chosen {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-color: var(--rule);
+
+/* Announced to a screen reader, absent for everyone else: the labels would
+   otherwise be two more words on a page that has enough. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .topster {

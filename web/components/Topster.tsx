@@ -144,34 +144,33 @@ export function Topster() {
           style={{ '--cols': size } as React.CSSProperties}
           {...{ [TOP_ALBUMS_ATTR]: 'live' }}
         >
+          {/* Native selects: a phone gets its own picker, a keyboard gets
+              arrow keys, and both come with a real tap target — none of which
+              a row of text buttons had without being built. */}
           <div className="topster-controls">
-            <span className="topster-group">
-              {periods.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => choose({ period: p })}
-                  aria-pressed={p === shown}
-                  className={p === shown ? 'chosen' : undefined}
-                >
-                  {PERIOD_LABELS[p] ?? p}
-                </button>
-              ))}
-            </span>
-            <span className="topster-group">
-              {SIZES.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => choose({ size: s })}
-                  aria-pressed={s === size}
-                  aria-label={`${s} by ${s}`}
-                  className={s === size ? 'chosen' : undefined}
-                >
-                  {s}×{s}
-                </button>
-              ))}
-            </span>
+            <label className="topster-select">
+              <span className="visually-hidden">Period</span>
+              <select value={shown} onChange={(e) => choose({ period: e.target.value })}>
+                {periods.map((p) => (
+                  <option key={p} value={p}>
+                    {PERIOD_LABELS[p] ?? p}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="topster-select">
+              <span className="visually-hidden">Grid size</span>
+              <select
+                value={size}
+                onChange={(e) => choose({ size: Number(e.target.value) as Size })}
+              >
+                {SIZES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}×{s}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
 
           <ul className="topster" onMouseLeave={() => setFocused(0)}>
