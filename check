@@ -25,8 +25,11 @@ check_api() {
     exit 1
   fi
 
+  # -race because the service runs jobs alongside an HTTP server, and -count=2
+  # because a test that passes only on a fast machine is a test that fails in
+  # CI: a sleep long enough here was not long enough there.
   echo "→ go test"
-  (cd api && go test ./...)
+  (cd api && go test -race -count=2 ./...)
 }
 
 check_unit() {

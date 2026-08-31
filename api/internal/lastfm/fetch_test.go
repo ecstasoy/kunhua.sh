@@ -114,14 +114,31 @@ func TestAFailingFetchLeavesTheTrackAndStopsTheClock(t *testing.T) {
 
 // Through job.Start rather than by calling Run directly, so the recording path
 // is the one production uses.
+//
+// Cancellation waits on the job signalling that it ran, not on a sleep: a
+// sleep long enough on this machine is not long enough on a slower one.
 func runOnceThrough(t *testing.T, ctx context.Context, db *store.DB, log *slog.Logger, j job.Job) {
 	t.Helper()
 	j.Every = time.Hour // only the run at startup
+
+	ran := make(chan struct{})
+	inner := j.Run
+	j.Run = func(c context.Context) error {
+		err := inner(c)
+		close(ran)
+		return err
+	}
+
 	c, cancel := context.WithCancel(ctx)
 	wait := job.Start(c, db, log, j)
-	// The startup run is synchronous inside the goroutine; cancelling stops
-	// the ticker without interrupting it.
-	time.Sleep(50 * time.Millisecond)
+
+	select {
+	case <-ran:
+	case <-time.After(10 * time.Second):
+		cancel()
+		wait()
+		t.Fatal("the job never ran")
+	}
 	cancel()
 	wait()
 }
