@@ -332,25 +332,23 @@ pre code {
 /* --- Topster -------------------------------------------------------------
    A grid of album covers whose column count the reader chooses. */
 
-/* Sized to sit in the content column like everything else on the page. Letting
-   it break out past the rail and the measure made it the widest thing on the
-   page, starting further left than any other block: it read as a slab from a
-   different layout rather than a section of this one.
+/* One cover size for both music sections, so the grid and the now-playing
+   thumbnail read as the same thing at the same scale. The grid widens with the
+   count and is centred in the column: the control chooses how many albums to
+   see, not how big they are. */
+:root {
+  --cover: 56px;
+}
 
-   The cover is fixed and the grid widens with the count, so the control
-   chooses how many albums to see rather than how big they are. 108px is what
-   makes 5×5 fit the column exactly. */
 .topster-bleed {
-  --cover: 108px;
-  width: min(
-    calc(var(--cols) * var(--cover) + (var(--cols) - 1) * 6px),
-    100%
-  );
+  width: min(calc(var(--cols) * var(--cover) + (var(--cols) - 1) * 6px), 100%);
+  margin-inline: auto;
 }
 
 .topster-controls {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 14px;
   margin-bottom: 10px;
 }
@@ -405,6 +403,7 @@ pre code {
 .cover {
   aspect-ratio: 1;
   overflow: hidden;
+  border-radius: 2px;
 }
 
 .cover a {
@@ -443,6 +442,7 @@ pre code {
 .topster-caption {
   font-size: var(--text-meta);
   color: var(--soft);
+  text-align: center;
   margin: 8px 0 0;
   /* Fixed height, so moving across the grid does not shift the page. */
   min-height: 1.4em;
@@ -469,6 +469,9 @@ pre code {
   /* Full width, since three columns of a fixed size would not fill it. */
   .topster-bleed {
     width: 100%;
+  }
+  .topster-controls {
+    justify-content: center;
   }
   /* Five columns on a phone is a 66px cover: too small to read and too narrow
      to tap. The chosen size still ranks how many albums are shown. */

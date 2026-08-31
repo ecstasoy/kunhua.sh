@@ -12,7 +12,9 @@ import {
   type NowPlaying as Data,
 } from '@/lib/nowPlaying';
 
-const SIZE = 56;
+// The same token the album grid uses, so the two music sections stay at one
+// scale rather than drifting apart.
+const SIZE = 'var(--cover)';
 
 // A stored cover, or a block carrying the album's first letter.
 function Cover({ art, seed }: { art: string | null; seed: string }) {
@@ -21,9 +23,17 @@ function Cover({ art, seed }: { art: string | null; seed: string }) {
       <img
         src={art}
         alt=""
-        width={SIZE}
-        height={SIZE}
-        style={{ display: 'block', borderRadius: '2px', objectFit: 'cover' }}
+        /* Intrinsic size as well as the CSS one, so the line does not shift
+           as the cover arrives. */
+        width={56}
+        height={56}
+        style={{
+          display: 'block',
+          width: SIZE,
+          height: SIZE,
+          borderRadius: '2px',
+          objectFit: 'cover',
+        }}
       />
     );
   }

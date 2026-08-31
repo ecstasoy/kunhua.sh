@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { HangingSection } from '@/components/HangingSection';
+import { HangingSection, HangingRow } from '@/components/HangingSection';
 import {
   available,
   fallbackHue,
@@ -136,61 +136,65 @@ export function Topster() {
 
   return (
     <HangingSection label="Albums">
-      <div
-        className="topster-bleed"
-        style={{ '--cols': size } as React.CSSProperties}
-        {...{ [TOP_ALBUMS_ATTR]: 'live' }}
-      >
-        <div className="topster-controls">
-          <span className="topster-group">
-            {periods.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => choose({ period: p })}
-                aria-pressed={p === shown}
-                className={p === shown ? 'chosen' : undefined}
-              >
-                {PERIOD_LABELS[p] ?? p}
-              </button>
+      {/* HangingRow, like every other section: .hang is a two-column grid, so
+          a bare child lands in the 88px rail column. */}
+      <HangingRow>
+        <div
+          className="topster-bleed"
+          style={{ '--cols': size } as React.CSSProperties}
+          {...{ [TOP_ALBUMS_ATTR]: 'live' }}
+        >
+          <div className="topster-controls">
+            <span className="topster-group">
+              {periods.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => choose({ period: p })}
+                  aria-pressed={p === shown}
+                  className={p === shown ? 'chosen' : undefined}
+                >
+                  {PERIOD_LABELS[p] ?? p}
+                </button>
+              ))}
+            </span>
+            <span className="topster-group">
+              {SIZES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => choose({ size: s })}
+                  aria-pressed={s === size}
+                  aria-label={`${s} by ${s}`}
+                  className={s === size ? 'chosen' : undefined}
+                >
+                  {s}×{s}
+                </button>
+              ))}
+            </span>
+          </div>
+
+          <ul className="topster" onMouseLeave={() => setFocused(0)}>
+            {albums.map((a, i) => (
+              <Cover
+                key={`${a.artist}-${a.album}-${i}`}
+                album={a}
+                onFocus={() => setFocused(i)}
+              />
             ))}
-          </span>
-          <span className="topster-group">
-            {SIZES.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => choose({ size: s })}
-                aria-pressed={s === size}
-                aria-label={`${s} by ${s}`}
-                className={s === size ? 'chosen' : undefined}
-              >
-                {s}×{s}
-              </button>
-            ))}
-          </span>
+          </ul>
+
+          {/* One caption below the grid rather than a label under every cover:
+              at 5×5 there is no room for two lines of text per cell, and the
+              grid would jump as names of different lengths wrapped. This is
+              also where an album's note will go. */}
+          <p className="topster-caption" aria-live="polite">
+            {caption.album}
+            <span> · {caption.artist}</span>
+            <span className="topster-plays">{` · ${caption.plays} plays`}</span>
+          </p>
         </div>
-
-        <ul className="topster" onMouseLeave={() => setFocused(0)}>
-          {albums.map((a, i) => (
-            <Cover
-              key={`${a.artist}-${a.album}-${i}`}
-              album={a}
-              onFocus={() => setFocused(i)}
-            />
-          ))}
-        </ul>
-
-        {/* One caption below the grid rather than a label under every cover:
-            at 5×5 there is no room for two lines of text per cell, and the
-            grid would jump as names of different lengths wrapped. This is
-            also where an album's note will go. */}
-        <p className="topster-caption" aria-live="polite">
-          {caption.album}
-          <span> · {caption.artist}</span>
-          <span className="topster-plays">{` · ${caption.plays} plays`}</span>
-        </p>
-      </div>
+      </HangingRow>
     </HangingSection>
   );
 }
