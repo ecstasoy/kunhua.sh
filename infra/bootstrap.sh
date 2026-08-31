@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Hardens a fresh machine, lays out the site directories, and installs Caddy.
-# Idempotent — safe to re-run on a live machine after editing it.
+#
+# Idempotent, which here means specifically: re-running must not destroy state
+# the machine has acquired since. Anything holding a credential is created when
+# absent and otherwise left alone. That claim went untested until the first real
+# re-run, which wiped the CI key and broke deploys while the site stayed up.
 #
 # Upload Caddyfile alongside it; this script looks for it next to itself.
 #
@@ -25,7 +29,10 @@ fi
 usermod -aG sudo "$DEPLOY_USER"
 
 install -d -m 700 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "/home/$DEPLOY_USER/.ssh"
-if [ -f /root/.ssh/authorized_keys ]; then
+# Seed from root's keys on a blank machine only. Re-running must never rewrite
+# an authorized_keys file that is already in use: keys added since would be
+# silently dropped, and the first symptom is being locked out.
+if [ ! -s "/home/$DEPLOY_USER/.ssh/authorized_keys" ] && [ -f /root/.ssh/authorized_keys ]; then
   install -m 600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" \
     /root/.ssh/authorized_keys "/home/$DEPLOY_USER/.ssh/authorized_keys"
 fi
@@ -48,7 +55,12 @@ if ! id "$CI_USER" &>/dev/null; then
   adduser --disabled-password --gecos "" --shell /bin/bash "$CI_USER"
 fi
 install -d -m 700 -o "$CI_USER" -g "$CI_USER" "/home/$CI_USER/.ssh"
-install -m 600 -o "$CI_USER" -g "$CI_USER" /dev/null "/home/$CI_USER/.ssh/authorized_keys"
+# Create the file, never truncate it. `install /dev/null` empties whatever is
+# there, so re-running this script used to delete the CI deploy key and break
+# every pipeline — while the site stayed up, which is what made it hard to see.
+if [ ! -f "/home/$CI_USER/.ssh/authorized_keys" ]; then
+  install -m 600 -o "$CI_USER" -g "$CI_USER" /dev/null "/home/$CI_USER/.ssh/authorized_keys"
+fi
 
 getent group "$SITE_GROUP" >/dev/null || groupadd "$SITE_GROUP"
 usermod -aG "$SITE_GROUP" "$DEPLOY_USER"
