@@ -290,8 +290,7 @@ test('every page carries the machine line in its unavailable state', () => {
             `${home}: no machine line, or it was emitted as if live`,
         );
         // The em dash placeholder, twice: uptime and deploy time.
-        const placeholders = html.match(
-            /data-machine-status="unavailable"[^]*?(?=<span data-now-playing|<\/footer>)/)?.[0] ?? '';
+        const placeholders = html.match(/data-machine-status="unavailable"[^]*?<\/footer>/)?.[0] ?? '';
         assert.equal(
             (placeholders.match(/—/g) ?? []).length,
             2,
@@ -322,22 +321,15 @@ test('the machine line names no value the service does not send', () => {
     }
 });
 
-test('every page ships the now-playing line in its empty state', () => {
-    // Nothing is fetched at build time, so what ships is the state where there
-    // is nothing to say — no separator, no empty parentheses, no gap. The
-    // assertion is that this state exists and renders to nothing visible,
-    // since a footer that reserved space for a song would show a hole
-    // whenever the fetcher was down.
-    let checked = 0;
-    for (const file of everyPage().filter((f) => !/404|_not-found/.test(f))) {
-        const where = path.relative(OUT, file);
-        const html = fs.readFileSync(file, 'utf8');
-        const el = html.match(/<span data-now-playing="[^"]*"[^>]*>(.*?)<\/span>|<span data-now-playing="[^"]*"\/?>/)?.[0];
-        assert.ok(el, `${where}: no now-playing element`);
-        assert.match(el, /data-now-playing="none"/, `${where}: shipped as if a track were known`);
-        checked++;
+test('both homepages ship the listening section in its empty state', () => {
+    // Nothing is fetched at build time, so what ships is the state with
+    // nothing to say: a hidden marker and no heading. A section that reserved
+    // space would leave a hole on the page whenever the fetcher was down.
+    for (const home of ['index.html', 'en/index.html']) {
+        const html = read(home);
+        assert.match(html, /data-now-playing="none"/, `${home}: shipped as if a track were known`);
+        assert.doesNotMatch(html, />Listening</, `${home}: heading rendered with nothing under it`);
     }
-    assert.ok(checked > 1, 'expected the line on more than one page');
 });
 
 test('the now-playing contract names nothing the service does not send', () => {

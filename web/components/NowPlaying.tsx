@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { HangingSection, HangingRow } from '@/components/HangingSection';
 import {
   formatAge,
   isNowPlaying,
@@ -11,16 +12,42 @@ import {
   type NowPlaying as Data,
 } from '@/lib/nowPlaying';
 
-/**
- * What is playing, as a line in the colophon.
- *
- * A footnote, not a card: no logo, no artwork, nothing that would make the
- * footer look like it is advertising a service. It reads as something the page
- * happens to know.
- *
- * The rule for when to stop presenting a track as current lives in
- * lib/nowPlaying.ts and is tested there. This file only renders the answer.
- */
+const SIZE = 56;
+
+// A stored cover, or a block carrying the album's first letter.
+function Cover({ art, seed }: { art: string | null; seed: string }) {
+  if (art) {
+    return (
+      <img
+        src={art}
+        alt=""
+        width={SIZE}
+        height={SIZE}
+        style={{ display: 'block', borderRadius: '2px', objectFit: 'cover' }}
+      />
+    );
+  }
+  return (
+    <div
+      aria-hidden
+      style={{
+        width: SIZE,
+        height: SIZE,
+        borderRadius: '2px',
+        background: 'var(--rule)',
+        color: 'var(--faint)',
+        fontSize: 'var(--text-lede)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {seed.slice(0, 1).toUpperCase()}
+    </div>
+  );
+}
+
+// What is playing, read from the service at view time.
 export function NowPlaying() {
   const [data, setData] = useState<Data | null>(null);
   const [receivedAt, setReceivedAt] = useState<number | null>(null);
@@ -40,7 +67,7 @@ export function NowPlaying() {
           setNow(Date.now());
         }
       } catch {
-        // Unreachable is an ordinary state; going stale is how it shows.
+        // Unreachable is ordinary here; going stale is how it shows.
       }
     };
 
@@ -56,36 +83,42 @@ export function NowPlaying() {
 
   const v = view(data, receivedAt, now);
 
-  // Nothing to say: no separator, no empty parentheses, no gap. The element
-  // stays so the build can assert this state is the one that ships.
+  // Nothing to show: no heading, no empty row. The marker stays so the build
+  // can assert this is the state that ships.
   if (v.kind === 'none') {
-    return <span {...{ [NOW_PLAYING_ATTR]: 'none' }} />;
+    return <span {...{ [NOW_PLAYING_ATTR]: 'none' }} hidden />;
   }
 
-  const { artist, title, url } = v.track;
-  const label = `${artist} – ${title}`;
+  const { artist, title, album, url } = v.track;
+  // "Playing" is the one claim that can be wrong; a stale entry never makes it.
+  const playing = v.kind === 'live' && v.playing;
 
   return (
-    <span {...{ [NOW_PLAYING_ATTR]: v.kind }}>
-      <span aria-hidden> · </span>
-      {/* "Playing" is the one claim that can be wrong. It is made only when
-          the fetch is current and Last.fm said so; a stale entry says "last
-          played", which stays true however old it is. */}
-      {!(v.kind === 'live' && v.playing) && 'last played '}
-      {url ? (
-        <a href={url} rel="noopener noreferrer">
-          {label}
-        </a>
-      ) : (
-        label
-      )}
-      {/* The age appears only once the fetch has stopped succeeding. Its being
-          there at all is the signal: a track that stopped changing looks
-          exactly like one that did not, which is the failure this line is
-          meant to make visible. */}
-      {v.kind === 'stale' && (
-        <span style={{ color: 'var(--rule)' }}>{` (checked ${formatAge(v.ageMs)} ago)`}</span>
-      )}
-    </span>
+    <HangingSection label="Listening">
+      <HangingRow>
+        <div {...{ [NOW_PLAYING_ATTR]: v.kind }} style={{ display: 'flex', gap: '12px' }}>
+          <Cover art={v.art} seed={album || artist} />
+          <div style={{ minWidth: 0 }}>
+            <div className="item-title">
+              {url ? (
+                <a href={url} rel="noopener noreferrer">
+                  {title}
+                </a>
+              ) : (
+                title
+              )}
+            </div>
+            <p className="item-excerpt">
+              {artist}
+              {album && <span style={{ color: 'var(--faint)' }}>{` · ${album}`}</span>}
+            </p>
+            <p style={{ fontSize: 'var(--text-meta)', color: 'var(--faint)', margin: 0 }}>
+              {playing ? 'now playing' : 'last played'}
+              {v.kind === 'stale' && ` · checked ${formatAge(v.ageMs)} ago`}
+            </p>
+          </div>
+        </div>
+      </HangingRow>
+    </HangingSection>
   );
 }

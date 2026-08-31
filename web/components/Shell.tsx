@@ -2,7 +2,6 @@ import { GitHubIcon, MailIcon } from '@/components/Icons';
 import { EmailLink } from '@/components/Email';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { MachineStatus } from '@/components/MachineStatus';
-import { NowPlaying } from '@/components/NowPlaying';
 import { path, other, switchLabel, type Locale } from '@/lib/locale';
 
 /**
@@ -51,7 +50,6 @@ export function Shell({
         © 2026 Kunhua Huang
         <span aria-hidden> · </span>
         <MachineStatus />
-        <NowPlaying />
       </footer>
     </div>
   );

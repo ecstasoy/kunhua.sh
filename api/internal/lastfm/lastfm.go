@@ -1,6 +1,4 @@
-// Package lastfm reads listening history. It is the only thing in this service
-// that talks to the outside world, and it is written on the assumption that
-// the outside world is slow, wrong, or absent.
+// Package lastfm fetches listening history from Last.fm.
 package lastfm
 
 import (
@@ -11,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"kunhua.sh/api/internal/store"
@@ -18,16 +17,12 @@ import (
 
 const DefaultBaseURL = "https://ws.audioscrobbler.com/2.0/"
 
-// Bodies are read with a cap. A response that never ends would otherwise fill
-// memory on a machine chosen for being small, and no legitimate answer here is
-// anywhere near this size.
+// Cap response size to avoid unbounded memory use.
 const maxBody = 1 << 20
 
 type Client struct {
-	Key  string
-	User string
-	// BaseURL is a field so tests can point at a server that times out, fails,
-	// or returns nonsense — which is most of what this package has to handle.
+	Key     string
+	User    string
 	BaseURL string
 	HTTP    *http.Client
 }
@@ -37,20 +32,13 @@ func New(key, user string) *Client {
 		Key:     key,
 		User:    user,
 		BaseURL: DefaultBaseURL,
-		// A timeout on the client as well as the context: the context bounds
-		// the call, this bounds a connection that hangs before the request is
-		// even sent.
-		HTTP: &http.Client{Timeout: 20 * time.Second},
+		HTTP:    &http.Client{Timeout: 20 * time.Second},
 	}
 }
 
-// The wire format, which is JSON pretending to be XML: every value is a string,
-// and the fields that matter are named "#text" and "@attr". Kept in one place
-// so the rest of the service never sees it.
+// Last.fm wire format.
 type response struct {
-	// Last.fm reports its own errors with HTTP 200 and a body like
-	// {"error":6,"message":"User not found"}. Ignoring this would turn a wrong
-	// username into "no tracks" — a silence that looks like not listening.
+	// Last.fm may return errors in a 200 response body.
 	Error   int    `json:"error"`
 	Message string `json:"message"`
 
@@ -70,12 +58,15 @@ type response struct {
 			Date struct {
 				UTS string `json:"uts"`
 			} `json:"date"`
+			Image []struct {
+				Text string `json:"#text"`
+				Size string `json:"size"`
+			} `json:"image"`
 		} `json:"track"`
 	} `json:"recenttracks"`
 }
 
-// RecentTracks returns the most recent plays, newest first, and whether the
-// first of them is playing right now.
+// RecentTracks returns tracks (newest first) and whether the first is now playing.
 func (c *Client) RecentTracks(ctx context.Context, limit int) ([]store.Track, bool, error) {
 	q := url.Values{
 		"method":  {"user.getrecenttracks"},
@@ -89,8 +80,6 @@ func (c *Client) RecentTracks(ctx context.Context, limit int) ([]store.Track, bo
 	if err != nil {
 		return nil, false, err
 	}
-	// Identifying the caller is a courtesy to whoever has to look at their own
-	// logs, and the thing that gets a project unblocked rather than banned.
 	req.Header.Set("User-Agent", "kunhua.sh/1.0 (+https://kunhua.sh)")
 
 	res, err := c.HTTP.Do(req)
@@ -113,24 +102,27 @@ func (c *Client) RecentTracks(ctx context.Context, limit int) ([]store.Track, bo
 
 	tracks := make([]store.Track, 0, len(body.RecentTracks.Track))
 	playing := false
+
 	for i, t := range body.RecentTracks.Track {
-		// A track with no artist or title is not something to put on a page.
+		// Skip malformed entries.
 		if t.Artist.Text == "" || t.Name == "" {
 			continue
 		}
+
 		track := store.Track{
 			Artist: t.Artist.Text,
 			Title:  t.Name,
 			Album:  t.Album.Text,
 			URL:    t.URL,
+			ArtURL: coverURL(t.Image),
 		}
-		// Whatever is playing has no date: it has not finished. Everything
-		// else carries a unix timestamp, as a string.
+
 		if secs, err := strconv.ParseInt(t.Date.UTS, 10, 64); err == nil && secs > 0 {
 			track.PlayedAt = time.Unix(secs, 0).UTC()
 		} else if i == 0 && t.Attr.NowPlaying == "true" {
 			playing = true
 		}
+
 		tracks = append(tracks, track)
 	}
 
@@ -138,4 +130,60 @@ func (c *Client) RecentTracks(ctx context.Context, limit int) ([]store.Track, bo
 		return nil, false, nil
 	}
 	return tracks, playing, nil
+}
+
+// noCoverID appears in the URL Last.fm serves when an album has no cover.
+const noCoverID = "2a96cbd8b46e442fc41c2b86b821562f"
+
+// coverURL picks the largest offered image, ignoring the placeholder star.
+func coverURL(images []struct {
+	Text string `json:"#text"`
+	Size string `json:"size"`
+}) string {
+	bySize := map[string]string{}
+	for _, i := range images {
+		if i.Text != "" && !strings.Contains(i.Text, noCoverID) {
+			bySize[i.Size] = i.Text
+		}
+	}
+	for _, size := range []string{"extralarge", "large", "medium", "small"} {
+		if u := bySize[size]; u != "" {
+			return u
+		}
+	}
+	return ""
+}
+
+// maxArt caps a cover download.
+const maxArt = 4 << 20
+
+// DownloadArt fetches a cover, refusing anything that is not an image.
+func (c *Client) DownloadArt(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "kunhua.sh/1.0 (+https://kunhua.sh)")
+
+	res, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("cover returned %s", res.Status)
+	}
+	if ct := res.Header.Get("Content-Type"); !strings.HasPrefix(ct, "image/") {
+		return nil, fmt.Errorf("cover is %q, not an image", ct)
+	}
+
+	b, err := io.ReadAll(io.LimitReader(res.Body, maxArt))
+	if err != nil {
+		return nil, err
+	}
+	if len(b) == 0 {
+		return nil, fmt.Errorf("cover is empty")
+	}
+	return b, nil
 }

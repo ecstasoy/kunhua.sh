@@ -17,6 +17,7 @@ import (
 	// about this service's behaviour should move with it.
 	_ "time/tzdata"
 
+	"kunhua.sh/api/internal/art"
 	"kunhua.sh/api/internal/job"
 	"kunhua.sh/api/internal/lastfm"
 	"kunhua.sh/api/internal/server"
@@ -43,6 +44,8 @@ func run(log *slog.Logger) error {
 	// The site's release symlink, not the API's own: the homepage reports when
 	// the site last deployed.
 	releaseLink := env("APP_RELEASE_LINK", "/srv/kunhua.sh/current")
+	// Under the one path the unit allows the service to write.
+	arts := art.Store{Dir: env("APP_ART_DIR", "/srv/kunhua.sh/data/art")}
 
 	db, err := store.Open(dbPath)
 	if err != nil {
@@ -59,7 +62,7 @@ func run(log *slog.Logger) error {
 
 	srv := &http.Server{
 		Addr:    addr,
-		Handler: server.New(db, log, server.Config{ReleaseLink: releaseLink}),
+		Handler: server.New(db, log, server.Config{ReleaseLink: releaseLink, Art: arts}),
 		// Without ReadHeaderTimeout a connection that sends half a request
 		// header holds a slot indefinitely.
 		ReadHeaderTimeout: 5 * time.Second,
@@ -73,7 +76,7 @@ func run(log *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	waitJobs := startJobs(ctx, db, log)
+	waitJobs := startJobs(ctx, db, log, arts)
 
 	// ListenAndServe blocks, so it runs on its own goroutine and reports
 	// through a channel. Calling it here instead would mean a failure to bind
@@ -111,7 +114,7 @@ func run(log *slog.Logger) error {
 // exist: the endpoint reports nothing fetched and the page shows nothing,
 // rather than a job failing every minute and filling the journal with the
 // same line.
-func startJobs(ctx context.Context, db *store.DB, log *slog.Logger) func() {
+func startJobs(ctx context.Context, db *store.DB, log *slog.Logger, arts art.Store) func() {
 	key, user := os.Getenv("LASTFM_API_KEY"), os.Getenv("LASTFM_USER")
 	if key == "" || user == "" {
 		log.Info("last.fm not configured; now-playing disabled")
@@ -119,7 +122,7 @@ func startJobs(ctx context.Context, db *store.DB, log *slog.Logger) func() {
 	}
 
 	log.Info("last.fm configured", "user", user)
-	return job.Start(ctx, db, log, lastfm.New(key, user).Job(db))
+	return job.Start(ctx, db, log, lastfm.New(key, user).Job(db, arts))
 }
 
 func env(key, def string) string {

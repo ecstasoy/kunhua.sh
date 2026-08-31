@@ -9,6 +9,7 @@ const at = (iso: string) => Date.parse(iso);
 const data = (over: Partial<NowPlaying> = {}): NowPlaying => ({
     track: TRACK,
     playing: true,
+    art: '/api/art/' + 'ab'.repeat(32),
     fetched_at: '2026-08-31T11:59:00Z',
     generated_at: '2026-08-31T12:00:00Z',
     ...over,
@@ -57,6 +58,8 @@ test('a body that is not the agreed shape is rejected whole', () => {
     assert.equal(isNowPlaying(data({ track: null })), true);
     assert.equal(isNowPlaying({ ...data(), playing: 'yes' }), false);
     assert.equal(isNowPlaying({ ...data(), track: { artist: 'A' } }), false);
+    assert.equal(isNowPlaying({ ...data(), art: 42 }), false);
+    assert.equal(isNowPlaying({ ...data(), art: null }), true);
     assert.equal(isNowPlaying(null), false);
     assert.equal(isNowPlaying('a string'), false);
 });

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"kunhua.sh/api/internal/art"
 	"kunhua.sh/api/internal/host"
 	"kunhua.sh/api/internal/store"
 )
@@ -17,6 +18,8 @@ type Config struct {
 	// ReleaseLink is the site's current-release symlink. Its own mtime is the
 	// moment of the last deploy.
 	ReleaseLink string
+	// Art is where cover images are stored.
+	Art art.Store
 
 	Uptime      func() (time.Duration, error)
 	SymlinkTime func(string) (time.Time, error)
@@ -45,6 +48,7 @@ func New(db *store.DB, log *slog.Logger, cfg Config) http.Handler {
 	mux.HandleFunc("GET /api/healthz", health(db))
 	mux.HandleFunc("GET /api/status", status(cfg))
 	mux.HandleFunc("GET /api/now-playing", nowPlaying(db, cfg))
+	mux.HandleFunc("GET /api/art/{hash}", serveArt(cfg.Art))
 
 	// Middleware order matters:
 	// request ID first, then logging, then recover inside logging.

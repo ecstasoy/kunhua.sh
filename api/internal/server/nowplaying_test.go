@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"kunhua.sh/api/internal/art"
 	"kunhua.sh/api/internal/lastfm"
 	"kunhua.sh/api/internal/store"
 )
@@ -62,8 +64,11 @@ func TestNowPlayingFieldNamesAndTypes(t *testing.T) {
 
 	got := getJSON(t, h, "/api/now-playing")
 
-	if len(got) != 4 {
-		t.Errorf("fields = %v, want exactly track, playing, fetched_at, generated_at", keys(got))
+	if len(got) != 5 {
+		t.Errorf("fields = %v, want exactly track, playing, art, fetched_at, generated_at", keys(got))
+	}
+	if got["art"] != nil {
+		t.Errorf("art = %#v, want null when no cover is stored", got["art"])
 	}
 	if got["playing"] != true {
 		t.Errorf("playing = %#v, want true", got["playing"])
@@ -141,5 +146,62 @@ func TestNowPlayingIsNotCacheable(t *testing.T) {
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/now-playing", nil))
 	if got := rec.Header().Get("Cache-Control"); got != "no-store" {
 		t.Errorf("Cache-Control = %q, want no-store", got)
+	}
+}
+
+func TestArtIsAPathOnThisSiteWhenACoverIsStored(t *testing.T) {
+	now := time.Now()
+	db, h := dbAndServer(t, now)
+	hash := strings.Repeat("ab", 32)
+
+	track := store.Track{Artist: "A", Title: "T", ArtHash: hash}
+	if err := db.SaveCurrent(context.Background(), track, true, now); err != nil {
+		t.Fatal(err)
+	}
+
+	got := getJSON(t, h, "/api/now-playing")
+	// A path here and not an upstream URL: the page must not reach for
+	// someone else's CDN to render.
+	if got["art"] != "/api/art/"+hash {
+		t.Errorf("art = %#v, want /api/art/%s", got["art"], hash)
+	}
+}
+
+func TestArtEndpointServesStoredBytesAndRefusesTheRest(t *testing.T) {
+	dir := t.TempDir()
+	arts := art.Store{Dir: dir}
+	hash, err := arts.Save([]byte("PNG-ish bytes"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	db, err := store.Open(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { db.Close() })
+	if err := db.Migrate(); err != nil {
+		t.Fatal(err)
+	}
+	h := New(db, slog.New(slog.NewJSONHandler(io.Discard, nil)), Config{Art: arts})
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/art/"+hash, nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("stored cover = %d, want 200", rec.Code)
+	}
+	if rec.Body.String() != "PNG-ish bytes" {
+		t.Errorf("body = %q", rec.Body.String())
+	}
+	if cc := rec.Header().Get("Cache-Control"); !strings.Contains(cc, "immutable") {
+		t.Errorf("Cache-Control = %q; the name is the content", cc)
+	}
+
+	for _, bad := range []string{"/api/art/nope", "/api/art/" + strings.Repeat("z", 64)} {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, bad, nil))
+		if rec.Code != http.StatusNotFound {
+			t.Errorf("GET %s = %d, want 404", bad, rec.Code)
+		}
 	}
 }

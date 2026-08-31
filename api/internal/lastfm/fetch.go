@@ -4,49 +4,72 @@ import (
 	"context"
 	"time"
 
+	"kunhua.sh/api/internal/art"
 	"kunhua.sh/api/internal/job"
 	"kunhua.sh/api/internal/store"
 )
 
-// JobName is the key in job_runs. The page reports staleness against it, so it
-// is a constant rather than a string repeated in three places.
+// JobName is stored in job_runs and used for staleness checks.
 const JobName = "now-playing"
 
-// How many plays to ask for. Enough that a restart, or a minute missed, does
-// not leave a hole in the history; the duplicates it re-reads every time cost
-// nothing, since storing them is INSERT OR IGNORE.
+// fetchLimit keeps history resilient across short gaps; duplicates are fine.
 const fetchLimit = 50
 
-// Job is the scheduled fetch, ready to hand to job.Start.
-//
-// The numbers are here rather than at the call site because they are a single
-// judgement: asked once a minute, given ten seconds, tried three times with a
-// doubling wait. Three attempts over roughly six seconds covers a blip; a real
-// outage is left to the next minute rather than retried harder.
-func (c *Client) Job(db *store.DB) job.Job {
+// Job returns the scheduled fetch configuration.
+func (c *Client) Job(db *store.DB, arts art.Store) job.Job {
 	return job.Job{
 		Name:     JobName,
 		Every:    time.Minute,
 		Timeout:  10 * time.Second,
 		Attempts: 3,
 		Backoff:  2 * time.Second,
-		Run:      func(ctx context.Context) error { return c.fetchInto(ctx, db) },
+		Run: func(ctx context.Context) error {
+			return c.fetchInto(ctx, db, arts)
+		},
 	}
 }
 
-func (c *Client) fetchInto(ctx context.Context, db *store.DB) error {
+func (c *Client) fetchInto(ctx context.Context, db *store.DB, arts art.Store) error {
 	tracks, playing, err := c.RecentTracks(ctx, fetchLimit)
 	if err != nil {
 		return err
 	}
 	if len(tracks) == 0 {
-		// A successful fetch of an empty history. Nothing to store, and not a
-		// failure: an account with no plays is a legitimate answer.
+		// Empty history is valid, not an error.
 		return nil
 	}
 
 	if err := db.SaveScrobbles(ctx, tracks); err != nil {
 		return err
 	}
-	return db.SaveCurrent(ctx, tracks[0], playing, time.Now())
+
+	top := tracks[0]
+	top.ArtHash = c.coverHash(ctx, db, arts, top.ArtURL)
+	return db.SaveCurrent(ctx, top, playing, time.Now())
+}
+
+// coverHash resolves an upstream cover URL to a stored hash, downloading once.
+//
+// A cover that will not download is not a failed fetch: the track still shows,
+// with the fallback block, and the next run tries again.
+func (c *Client) coverHash(ctx context.Context, db *store.DB, arts art.Store, url string) string {
+	if url == "" {
+		return ""
+	}
+	if hash, found, err := db.ArtFor(ctx, url); err == nil && found {
+		return hash
+	}
+
+	b, err := c.DownloadArt(ctx, url)
+	if err != nil {
+		return ""
+	}
+	hash, err := arts.Save(b)
+	if err != nil {
+		return ""
+	}
+	if err := db.RememberArt(ctx, url, hash, time.Now()); err != nil {
+		return ""
+	}
+	return hash
 }

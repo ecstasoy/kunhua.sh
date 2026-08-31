@@ -22,6 +22,8 @@ type nowPlayingResponse struct {
 	// fresh machine and of one whose API key was never set.
 	Track   *trackJSON `json:"track"`
 	Playing bool       `json:"playing"`
+	// Art is a path on this site, or null when no cover is stored.
+	Art *string `json:"art"`
 	// FetchedAt is the last time the fetch *succeeded*, not the last time it
 	// ran. That distinction is the whole point: a job failing every minute
 	// still has a recent run, and a page told about the run would keep
@@ -42,6 +44,10 @@ func nowPlaying(db *store.DB, cfg Config) http.HandlerFunc {
 				URL:    current.Track.URL,
 			}
 			resp.Playing = current.Playing
+			if current.Track.ArtHash != "" {
+				at := "/api/art/" + current.Track.ArtHash
+				resp.Art = &at
+			}
 		}
 
 		if run, found, err := db.LastJobRun(r.Context(), lastfm.JobName); err == nil && found {

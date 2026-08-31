@@ -18,6 +18,8 @@ export type NowPlaying = {
   /** Null before anything has ever been fetched. */
   track: NowPlayingTrack | null;
   playing: boolean;
+  /** A path on this site, never an upstream URL. Null when no cover is stored. */
+  art: string | null;
   /** RFC 3339. When the fetch last *succeeded*, not when it last ran. */
   fetched_at: string | null;
   generated_at: string;
@@ -38,6 +40,7 @@ export function isNowPlaying(v: unknown): v is NowPlaying {
   if (typeof s.playing !== 'boolean') return false;
   if (typeof s.generated_at !== 'string') return false;
   if (!(s.fetched_at === null || typeof s.fetched_at === 'string')) return false;
+  if (!(s.art === null || typeof s.art === 'string')) return false;
   if (s.track === null) return true;
   if (typeof s.track !== 'object') return false;
   const t = s.track as Record<string, unknown>;
@@ -48,13 +51,13 @@ export type View =
   /** Nothing to show: never fetched, never reached, or no listening history. */
   | { kind: 'none' }
   /** Current, and worth presenting as such. */
-  | { kind: 'live'; track: NowPlayingTrack; playing: boolean }
+  | { kind: 'live'; track: NowPlayingTrack; art: string | null; playing: boolean }
   /**
    * A track we still have, from a fetch that stopped succeeding. Shown with
    * its age rather than silently as if current — this is the failure the whole
    * ticket is about, and the only visible symptom is the absence of change.
    */
-  | { kind: 'stale'; track: NowPlayingTrack; ageMs: number };
+  | { kind: 'stale'; track: NowPlayingTrack; art: string | null; ageMs: number };
 
 /**
  * What the colophon should show.
@@ -76,7 +79,7 @@ export function view(
   // Our own connection to the site. Beyond one refresh interval the page is
   // reading its own memory, not the service.
   if (now - receivedAt > staleAfterMs) {
-    return { kind: 'stale', track: data.track, ageMs: now - receivedAt };
+    return { kind: 'stale', track: data.track, art: data.art, ageMs: now - receivedAt };
   }
 
   if (data.fetched_at === null) return { kind: 'none' };
@@ -84,9 +87,9 @@ export function view(
   if (Number.isNaN(fetched)) return { kind: 'none' };
 
   const age = now - fetched;
-  if (age > staleAfterMs) return { kind: 'stale', track: data.track, ageMs: age };
+  if (age > staleAfterMs) return { kind: 'stale', track: data.track, art: data.art, ageMs: age };
 
-  return { kind: 'live', track: data.track, playing: data.playing };
+  return { kind: 'live', track: data.track, art: data.art, playing: data.playing };
 }
 
 /** "3h", "2d", "40m" — for the parenthetical on a stale entry. */
