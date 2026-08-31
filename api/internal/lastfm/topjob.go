@@ -3,6 +3,7 @@ package lastfm
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"kunhua.sh/api/internal/art"
@@ -19,11 +20,14 @@ const TopJobName = "top-albums"
 // current track look stale, and so the two can run at different rates.
 func (c *Client) TopJob(db *store.DB, arts art.Store) job.Job {
 	return job.Job{
-		Name:     TopJobName,
-		Every:    24 * time.Hour,
-		Timeout:  3 * time.Minute,
-		Attempts: 3,
-		Backoff:  30 * time.Second,
+		Name:  TopJobName,
+		Every: 24 * time.Hour,
+		// A first run downloads around seventy covers and took just over two
+		// minutes in production; later runs are seconds, since the store is
+		// content-addressed and nothing is fetched twice.
+		Timeout:  10 * time.Minute,
+		Attempts: 2,
+		Backoff:  time.Minute,
 		Run: func(ctx context.Context) error {
 			return c.fetchTopInto(ctx, db, arts)
 		},
@@ -50,6 +54,9 @@ func (c *Client) fetchTopInto(ctx context.Context, db *store.DB, arts art.Store)
 		if err := db.ReplaceTopAlbums(ctx, period, albums); err != nil {
 			return err
 		}
+		// Per period, so a run that is slow shows where it is rather than
+		// looking stuck.
+		slog.Info("period stored", "job", TopJobName, "period", period, "albums", len(albums))
 	}
 
 	if len(failed) > 0 {

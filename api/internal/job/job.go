@@ -59,6 +59,10 @@ func loop(ctx context.Context, db *store.DB, log *slog.Logger, j Job) {
 
 func runOnce(ctx context.Context, db *store.DB, log *slog.Logger, j Job) {
 	started := time.Now()
+	// Logged before the work, not only after it. A job that takes minutes was
+	// indistinguishable from one that never started: nothing was written until
+	// the last attempt finished, which with retries is ten minutes away.
+	log.Info("job started", "job", j.Name)
 
 	var runErr error
 	for attempt := 1; attempt <= j.Attempts; attempt++ {

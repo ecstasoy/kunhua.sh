@@ -1,11 +1,13 @@
 package job
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
 	"log/slog"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -200,5 +202,27 @@ func TestStartStopsWhenTheContextIsCancelled(t *testing.T) {
 
 	if n := calls.Load(); n != 1 {
 		t.Errorf("ran %d times, want the one startup run", n)
+	}
+}
+
+// A job that takes minutes was indistinguishable from one that never started.
+func TestALongRunSaysItStarted(t *testing.T) {
+	db := testDB(t)
+	var buf bytes.Buffer
+	log := slog.New(slog.NewJSONHandler(&buf, nil))
+
+	runOnce(context.Background(), db, log, Job{
+		Name: "slow-but-fine", Attempts: 1, Timeout: time.Second,
+		Run: func(context.Context) error { return nil },
+	})
+
+	if !strings.Contains(buf.String(), `"msg":"job started"`) {
+		t.Errorf("nothing was logged before the work began:\n%s", buf.String())
+	}
+	// The start line has to come first, or it says nothing a reader could use.
+	started := strings.Index(buf.String(), `"job started"`)
+	finished := strings.Index(buf.String(), `"job ok"`)
+	if started == -1 || finished == -1 || started > finished {
+		t.Errorf("start was not logged before the outcome:\n%s", buf.String())
 	}
 }
