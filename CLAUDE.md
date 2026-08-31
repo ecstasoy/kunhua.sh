@@ -67,6 +67,10 @@ Run from `api/`:
 The gate takes a slice: `./check api`, `./check web`, or `./check` for both. The two halves deploy
 independently, so a failing Go test must not block publishing a post; locally you want the lot.
 
+`./check unit` is separate and **not** part of `./check`: it runs `systemd-analyze security` against
+`deploy/kunhua-api.service` with a ceiling on the exposure score, so it needs Linux with systemd and
+fails outright anywhere else rather than skipping. Run it on the host or let CI run it.
+
 ## Deploying
 
 Pushing to `main` deploys — CI builds, rsyncs to `releases/<sha>/` on the host, and swaps the

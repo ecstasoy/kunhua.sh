@@ -45,6 +45,13 @@ CapabilityBoundingSet=
 AmbientCapabilities=
 
 PrivateDevices=yes
+# PrivateDevices already hides the hardware; this makes the device ACL explicit
+# rather than implied, which is what systemd-analyze scores.
+DevicePolicy=closed
+# closed still leaves a small default ACL; empty the list on top of it.
+DeviceAllow=
+# The service never uses SysV IPC, so anything it leaves behind is a mistake.
+RemoveIPC=yes
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectKernelLogs=yes
@@ -66,7 +73,16 @@ RestrictSUIDSGID=yes
 LockPersonality=yes
 # Safe here because Go does not generate code at runtime.
 MemoryDenyWriteExecute=yes
+# @system-service still permits the privileged calls; an unprivileged Go
+# service needs none of them. ~@resources looks like the same free win and is
+# deliberately not here: the Go runtime raises RLIMIT_NOFILE at startup, so it
+# has to be tested against a running binary rather than added for the score.
+# Two lines, not one. The ~ prefix inverts the whole value, so a mid-list
+# ~@privileged is parsed as a syscall name, fails, and is skipped: the file
+# reads as hardened while the filter is not. systemd-analyze reports it, which
+# is the only reason it was caught.
 SystemCallFilter=@system-service
+SystemCallFilter=~@privileged
 SystemCallArchitectures=native
 
 [Install]

@@ -26,6 +26,46 @@ check_api() {
   (cd api && go test ./...)
 }
 
+check_unit() {
+  # The unit's confinement is now a list of directives rather than something a
+  # container implies, and a directive can be present, loaded, and inert — a
+  # mid-list ~@privileged parsed as a syscall name did exactly that, and only
+  # this number caught it. The floor is what makes a missing constraint visible.
+  #
+  # Deliberately its own slice, and a hard failure when systemd-analyze is
+  # absent rather than a skip. A check that quietly passes on the developer's
+  # machine is the failure this project keeps meeting; on macOS you simply do
+  # not run this slice, and CI always does.
+  local unit=deploy/kunhua-api.service
+  local max=1.4
+
+  if ! command -v systemd-analyze >/dev/null; then
+    echo "systemd-analyze not found: check unit needs Linux with systemd" >&2
+    exit 1
+  fi
+
+  echo "→ systemd-analyze security"
+  local out score
+  out=$(systemd-analyze security --offline=true --no-pager "$unit")
+  score=$(printf '%s\n' "$out" | sed -n 's/.*Overall exposure level for [^:]*: \([0-9.]*\).*/\1/p')
+
+  if [ -z "$score" ]; then
+    echo "could not read an exposure score from:" >&2
+    printf '%s\n' "$out" >&2
+    exit 1
+  fi
+
+  echo "   exposure $score (max $max)"
+  # The weights are systemd's, so a version bump can move the number without
+  # anything here changing. If that happens, re-baseline once and say so in the
+  # commit — do not widen it to make a red gate green.
+  if ! awk -v s="$score" -v m="$max" 'BEGIN { exit !(s <= m) }'; then
+    echo "exposure $score is worse than the floor of $max" >&2
+    printf '%s\n' "$out" | grep '✗' >&2
+    exit 1
+  fi
+}
+
 check_web() {
   echo "→ release.sh"
   node --test test/release.test.mjs
@@ -50,9 +90,12 @@ check_web() {
   (cd web && npx linkinator out --recurse --silent --skip '^https?://(?!localhost|127\.0\.0\.1)')
 }
 
+# `unit` is not in `all`: it needs systemd, and the machine this is written on
+# does not have it. CI runs it explicitly.
 case "${1:-all}" in
-  api) check_api ;;
-  web) check_web ;;
-  all) check_api; check_web ;;
-  *)   echo "usage: check [api|web]" >&2; exit 2 ;;
+  api)  check_api ;;
+  web)  check_web ;;
+  unit) check_unit ;;
+  all)  check_api; check_web ;;
+  *)    echo "usage: check [api|web|unit]" >&2; exit 2 ;;
 esac
