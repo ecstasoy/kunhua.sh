@@ -33,7 +33,7 @@ export function ProjectsPage({ locale }: { locale: Locale }) {
   const projects = getAllProjects(locale);
   return (
     <div>
-      <p className="serif" style={{ fontSize: 17, lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
+      <p className="serif" style={{ fontSize: 'var(--text-lede)', lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
         这里那里
       </p>
 

@@ -7,7 +7,7 @@ export function PostsIndex({ locale }: { locale: Locale }) {
   const posts = getAllPosts(locale);
   return (
     <div>
-      <p className="serif" style={{ fontSize: 17, lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
+      <p className="serif" style={{ fontSize: 'var(--text-lede)', lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
         你的我的
       </p>
 

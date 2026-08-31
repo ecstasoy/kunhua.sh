@@ -12,10 +12,10 @@ export function Home({ locale }: { locale: Locale }) {
     <div>
       {/* The opening lines speak in the owner's name and are shared by both
           locales, so they are not translated. */}
-      <p className="serif" style={{ fontSize: 17, lineHeight: 1.5, margin: 0 }}>
+      <p className="serif" style={{ fontSize: 'var(--text-lede)', lineHeight: 1.5, margin: 0 }}>
         Kunhua Huang
       </p>
-      <p style={{ fontSize: 12.5, lineHeight: 1.72, color: 'var(--soft)', maxWidth: '48ch', margin: '4px 0 6px' }}>
+      <p style={{ fontSize: 'var(--text-body)', lineHeight: 1.72, color: 'var(--soft)', maxWidth: '48ch', margin: '4px 0 6px' }}>
         MSCS @Northeastern University
       </p>
 
@@ -34,7 +34,7 @@ export function Home({ locale }: { locale: Locale }) {
           </HangingRow>
         ))}
         <HangingRow>
-          <a href={href(locale, '/posts/')} style={{ fontSize: 12.5, color: 'var(--faint)', borderBottomColor: 'var(--rule)' }}>
+          <a href={href(locale, '/posts/')} style={{ fontSize: 'var(--text-body)', color: 'var(--faint)', borderBottomColor: 'var(--rule)' }}>
             All posts →
           </a>
         </HangingRow>
@@ -65,7 +65,7 @@ export function Home({ locale }: { locale: Locale }) {
           </HangingRow>
         ))}
         <HangingRow>
-          <a href={href(locale, '/projects/')} style={{ fontSize: 12.5, color: 'var(--faint)', borderBottomColor: 'var(--rule)' }}>
+          <a href={href(locale, '/projects/')} style={{ fontSize: 'var(--text-body)', color: 'var(--faint)', borderBottomColor: 'var(--rule)' }}>
             All projects →
           </a>
         </HangingRow>

@@ -7,6 +7,21 @@
   --rule: #e4e1db;
   --accent: #a8391c;
 
+
+  /* Type scale. Sizes lived in the stylesheet and inline in components at
+     once, so changing the typography meant editing both and noticing if you
+     missed one. Colours were already tokens, which is why the dark theme cost
+     seven lines; this is the same move for size. */
+  --text-h1: 21px;
+  --text-lede: 17px;
+  --text-title: 14.5px;
+  --text-base: 14px;
+  --text-body: 12.5px;
+  --text-rail: 12px;
+  --text-meta: 11.5px;
+  --text-micro: 11px;
+  --text-nano: 10.5px;
+
   --measure: 700px;
   --rail: 88px;
 }
@@ -23,7 +38,7 @@ body {
   /* Plex carries no CJK glyphs, so Chinese falls through to Noto on its own.
      No per-script partitioning, and no build-time subsetting to maintain. */
   font-family: var(--font-sans), var(--font-cjk-sans), system-ui, sans-serif;
-  font-size: 14px;
+  font-size: var(--text-base);
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
 }
@@ -102,24 +117,24 @@ a:hover {
   margin-bottom: -8px;
 }
 .rail {
-  font-size: 12px;
+  font-size: var(--text-rail);
   color: var(--muted);
   padding-top: 2px;
 }
 .item-title {
-  font-size: 14.5px;
+  font-size: var(--text-title);
   line-height: 1.5;
   margin-bottom: 4px;
 }
 .item-excerpt {
-  font-size: 12.5px;
+  font-size: var(--text-body);
   line-height: 1.72;
   color: var(--soft);
   margin: 0;
 }
 .date {
   font-family: var(--font-mono), monospace;
-  font-size: 11.5px;
+  font-size: var(--text-meta);
   color: var(--faint);
 }
 
@@ -142,14 +157,14 @@ a:hover {
 
 /* A rail cell used as a field name rather than a date. */
 .rail-note {
-  font-size: 11.5px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 /* Rendered markdown inside a rail row: the row already sets the rhythm, so
    paragraphs should not add their own leading margin. */
 .prose p {
-  font-size: 12.5px;
+  font-size: var(--text-body);
   line-height: 1.72;
   color: var(--soft);
   margin: 0 0 10px;
@@ -172,7 +187,7 @@ a:hover {
   list-style: square;
 }
 .prose li {
-  font-size: 12.5px;
+  font-size: var(--text-body);
   line-height: 1.72;
   color: var(--soft);
   margin-bottom: 7px;
@@ -195,17 +210,17 @@ a:hover {
   flex-wrap: wrap;
 }
 .hang-lede {
-  font-size: 12.5px;
+  font-size: var(--text-body);
   line-height: 1.72;
   color: var(--soft);
   margin: 5px 0 0;
 }
 .hang-head .name {
-  font-size: 14.5px;
+  font-size: var(--text-title);
 }
 .hang-head .meta {
   font-family: var(--font-mono), monospace;
-  font-size: 10.5px;
+  font-size: var(--text-nano);
   color: var(--faint);
   text-align: right;
 }
@@ -235,20 +250,20 @@ a:hover {
   margin-top: 46px;
   padding-top: 12px;
   border-top: 1px solid var(--rule);
-  font-size: 11px;
+  font-size: var(--text-micro);
   color: var(--faint);
 }
 
 /* A listed entry that has no version in the language being read. */
 .untranslated {
-  font-size: 11.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--faint);
   margin: 4px 0 0;
 }
 .locale-switch {
   font-family: var(--font-mono), monospace;
-  font-size: 11px;
+  font-size: var(--text-micro);
 }
 
 /* ── dark ──────────────────────────────────────────────────────────────────
@@ -299,7 +314,7 @@ pre {
   background: var(--rule);
   padding: 12px 14px;
   overflow-x: auto;
-  font-size: 11.5px;
+  font-size: var(--text-meta);
   line-height: 1.75;
   margin: 14px 0;
 }

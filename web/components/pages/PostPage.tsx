@@ -6,7 +6,7 @@ export function PostPage({ slug, locale }: { slug: string; locale: Locale }) {
   const post = getPost(slug, locale);
   return (
     <article>
-      <h1 className="serif" style={{ fontSize: 21, fontWeight: 400, margin: '0 0 6px' }}>
+      <h1 className="serif" style={{ fontSize: 'var(--text-h1)', fontWeight: 400, margin: '0 0 6px' }}>
         {post.title}
       </h1>
       <div className="date" style={{ marginBottom: post.translated ? 26 : 8 }}>

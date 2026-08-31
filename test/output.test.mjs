@@ -233,3 +233,22 @@ test('the dark theme redefines the tokens', () => {
   }
 });
 
+test('no font size is written as a literal', () => {
+  // Sizes used to live in the stylesheet and inline in components at once, so
+  // a change meant editing both. Colours never had that problem because they
+  // were tokens from the start, which is why the dark theme was seven lines.
+  const css = fs
+    .readdirSync(path.join(OUT, '_next/static/chunks'))
+    .filter((f) => f.endsWith('.css'))
+    .map((f) => fs.readFileSync(path.join(OUT, '_next/static/chunks', f), 'utf8'))
+    .join('');
+  const inCss = css.match(/font-size:\s*[0-9.]+(px|rem)/g) ?? [];
+  assert.deepEqual(inCss, [], `literal font-size in CSS: ${inCss.join(', ')}`);
+
+  for (const file of everyPage().filter((f) => !/404|_not-found/.test(f))) {
+    const html = fs.readFileSync(file, 'utf8');
+    const inline = html.match(/font-size:\s*[0-9.]+(px|rem)/g) ?? [];
+    assert.deepEqual(inline, [], `${file}: literal font-size inline`);
+  }
+});
+
