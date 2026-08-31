@@ -4,8 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-`kunhua.sh` — personal website. **Design is settled; no implementation exists yet.** The directories
-below are empty. The full design and its rationale live in
+`kunhua.sh` — personal website. `web/` is live and deploys on push. `api/` runs locally — the
+service, its database and its health check exist; nothing supervises or deploys it yet. The full
+design and its rationale live in
 `docs/superpowers/specs/2026-08-29-personal-site-design.md` — read it before proposing changes, since
 most structural questions are already decided there (and several tempting options are ruled out on
 purpose). Build/test commands are recorded here as they become real; do not assume a listed command
@@ -54,7 +55,15 @@ Run from `web/`:
 - `npm run build` — static export into `web/out/`
 - `npm run preview` — serve the exported output, byte-for-byte what gets deployed
 
-`api/` is not scaffolded yet; record `go build ./...` and the single-test form here once it is.
+Run from `api/`:
+
+- `go test ./...` — the whole suite; a single test is `go test ./internal/store -run TestMigrateIsIdempotent`
+- `go build ./cmd/server` — the binary
+- `APP_DB=./data/app.db APP_ADDR=127.0.0.1:8080 go run ./cmd/server` — runs it locally. Note
+  `go run` does not forward SIGTERM to the child, so use a built binary when testing shutdown.
+
+The gate takes a slice: `./check api`, `./check web`, or `./check` for both. The two halves deploy
+independently, so a failing Go test must not block publishing a post; locally you want the lot.
 
 ## Deploying
 

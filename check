@@ -1,26 +1,58 @@
 #!/usr/bin/env bash
 # The one gate. CI runs this same script.
+#
+# Takes a slice, because the two halves deploy independently: `check web`,
+# `check api`, or no argument for both. A failing Go test must not block
+# publishing a post — that isolation is the whole reason the pipelines are
+# path-filtered — but locally you want the lot, so the default is everything.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-echo "→ release.sh"
-node --test test/release.test.mjs
+check_api() {
+  echo "→ go vet"
+  (cd api && go vet ./...)
 
-# These drive builds of their own with a fixture post in content/, so they run
-# before the real build — otherwise the last build they leave behind is the one
-# that gets deployed, fixture and all.
-echo "→ front-matter"
-node --test test/frontmatter.test.mjs
+  # gofmt reports rather than fails, so its output has to be turned into an
+  # exit code by hand. An empty list is the passing case.
+  echo "→ gofmt"
+  unformatted=$(cd api && gofmt -l .)
+  if [ -n "$unformatted" ]; then
+    echo "not gofmt'd:" >&2
+    echo "$unformatted" >&2
+    exit 1
+  fi
 
-echo "→ build"
-(cd web && npm run build)
+  echo "→ go test"
+  (cd api && go test ./...)
+}
 
-echo "→ output"
-node --test test/output.test.mjs
+check_web() {
+  echo "→ release.sh"
+  node --test test/release.test.mjs
 
-echo "→ links"
-# linkinator serves the directory over HTTP, so every link becomes a
-# localhost URL. Skipping /^https?:\/\// therefore skips everything — it
-# reported "scanned 0 links" and looked like it was passing. Exclude only
-# links that are not local.
-(cd web && npx linkinator out --recurse --silent --skip '^https?://(?!localhost|127\.0\.0\.1)')
+  # These drive builds of their own with a fixture post in content/, so they run
+  # before the real build — otherwise the last build they leave behind is the one
+  # that gets deployed, fixture and all.
+  echo "→ front-matter"
+  node --test test/frontmatter.test.mjs
+
+  echo "→ build"
+  (cd web && npm run build)
+
+  echo "→ output"
+  node --test test/output.test.mjs
+
+  echo "→ links"
+  # linkinator serves the directory over HTTP, so every link becomes a
+  # localhost URL. Skipping /^https?:\/\// therefore skips everything — it
+  # reported "scanned 0 links" and looked like it was passing. Exclude only
+  # links that are not local.
+  (cd web && npx linkinator out --recurse --silent --skip '^https?://(?!localhost|127\.0\.0\.1)')
+}
+
+case "${1:-all}" in
+  api) check_api ;;
+  web) check_web ;;
+  all) check_api; check_web ;;
+  *)   echo "usage: check [api|web]" >&2; exit 2 ;;
+esac

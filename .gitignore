@@ -58,3 +58,10 @@ content/drafts/
 web/.next/
 web/out/
 web/next-env.d.ts
+
+# Local SQLite database. Runtime data never belongs in git, and WAL mode leaves
+# two more files beside it that are easy to miss.
+api/data/
+*.db
+*.db-wal
+*.db-shm
