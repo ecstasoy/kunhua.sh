@@ -70,6 +70,12 @@ check_unit() {
 }
 
 check_web() {
+  # Pure logic, no browser: node runs the TypeScript directly. The rule for
+  # when a track stops being current is separable from its rendering precisely
+  # so it can be tested at all.
+  echo "→ view logic"
+  node --test test/nowPlaying.test.ts
+
   echo "→ release.sh"
   node --test test/release.test.mjs
 

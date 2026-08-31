@@ -17,6 +17,8 @@ import (
 	// about this service's behaviour should move with it.
 	_ "time/tzdata"
 
+	"kunhua.sh/api/internal/job"
+	"kunhua.sh/api/internal/lastfm"
 	"kunhua.sh/api/internal/server"
 	"kunhua.sh/api/internal/store"
 )
@@ -71,6 +73,8 @@ func run(log *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+	waitJobs := startJobs(ctx, db, log)
+
 	// ListenAndServe blocks, so it runs on its own goroutine and reports
 	// through a channel. Calling it here instead would mean a failure to bind
 	// never reaches the select below.
@@ -93,7 +97,29 @@ func run(log *slog.Logger) error {
 	// finishes on its own terms rather than being SIGKILLed mid-way.
 	sctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	return srv.Shutdown(sctx)
+	err = srv.Shutdown(sctx)
+
+	// Jobs share the signal context, so they are already unwinding; waiting
+	// lets an in-flight fetch record its outcome rather than vanishing.
+	waitJobs()
+	return err
+}
+
+// startJobs launches the scheduled fetchers that are configured.
+//
+// A missing API key is not an error. Without one the fetcher simply does not
+// exist: the endpoint reports nothing fetched and the page shows nothing,
+// rather than a job failing every minute and filling the journal with the
+// same line.
+func startJobs(ctx context.Context, db *store.DB, log *slog.Logger) func() {
+	key, user := os.Getenv("LASTFM_API_KEY"), os.Getenv("LASTFM_USER")
+	if key == "" || user == "" {
+		log.Info("last.fm not configured; now-playing disabled")
+		return func() {}
+	}
+
+	log.Info("last.fm configured", "user", user)
+	return job.Start(ctx, db, log, lastfm.New(key, user).Job(db))
 }
 
 func env(key, def string) string {

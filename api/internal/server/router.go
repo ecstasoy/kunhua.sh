@@ -44,6 +44,7 @@ func New(db *store.DB, log *slog.Logger, cfg Config) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/healthz", health(db))
 	mux.HandleFunc("GET /api/status", status(cfg))
+	mux.HandleFunc("GET /api/now-playing", nowPlaying(db, cfg))
 
 	// Middleware order matters:
 	// request ID first, then logging, then recover inside logging.

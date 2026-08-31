@@ -290,7 +290,8 @@ test('every page carries the machine line in its unavailable state', () => {
             `${home}: no machine line, or it was emitted as if live`,
         );
         // The em dash placeholder, twice: uptime and deploy time.
-        const placeholders = html.match(/data-machine-status="unavailable"[^]*?<\/footer>/)?.[0] ?? '';
+        const placeholders = html.match(
+            /data-machine-status="unavailable"[^]*?(?=<span data-now-playing|<\/footer>)/)?.[0] ?? '';
         assert.equal(
             (placeholders.match(/—/g) ?? []).length,
             2,
@@ -318,5 +319,41 @@ test('the machine line names no value the service does not send', () => {
             new RegExp(`json:"${field}"`),
             `web/lib/status.ts declares ${field}, which the Go handler never sends`,
         );
+    }
+});
+
+test('every page ships the now-playing line in its empty state', () => {
+    // Nothing is fetched at build time, so what ships is the state where there
+    // is nothing to say — no separator, no empty parentheses, no gap. The
+    // assertion is that this state exists and renders to nothing visible,
+    // since a footer that reserved space for a song would show a hole
+    // whenever the fetcher was down.
+    let checked = 0;
+    for (const file of everyPage().filter((f) => !/404|_not-found/.test(f))) {
+        const where = path.relative(OUT, file);
+        const html = fs.readFileSync(file, 'utf8');
+        const el = html.match(/<span data-now-playing="[^"]*"[^>]*>(.*?)<\/span>|<span data-now-playing="[^"]*"\/?>/)?.[0];
+        assert.ok(el, `${where}: no now-playing element`);
+        assert.match(el, /data-now-playing="none"/, `${where}: shipped as if a track were known`);
+        checked++;
+    }
+    assert.ok(checked > 1, 'expected the line on more than one page');
+});
+
+test('the now-playing contract names nothing the service does not send', () => {
+    const contract = fs.readFileSync(
+        path.join(import.meta.dirname, '..', 'web', 'lib', 'nowPlaying.ts'), 'utf8');
+    const handler = fs.readFileSync(
+        path.join(import.meta.dirname, '..', 'api', 'internal', 'server', 'nowplaying.go'), 'utf8');
+
+    // The NowPlaying type's own fields, not the whole file: other types in
+    // there describe view state, which the service knows nothing about.
+    const body = contract.match(/export type NowPlaying = \{([^]*?)\};/)?.[1] ?? '';
+    const fields = [...body.matchAll(/^\s{2}(\w+):/gm)].map((m) => m[1]);
+    assert.ok(fields.length >= 3, 'no fields found in the frontend type');
+
+    for (const field of fields) {
+        assert.match(handler, new RegExp(`json:"${field}"`),
+            `web/lib/nowPlaying.ts declares ${field}, which the Go handler never sends`);
     }
 });
