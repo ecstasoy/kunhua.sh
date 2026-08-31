@@ -53,7 +53,9 @@ If your output contradicts an existing ADR, surface it explicitly rather than si
 
 ## Current state
 
-Neither `CONTEXT.md` nor any ADR exists yet, and that is deliberate — `web/` and `api/` are still empty, so
-a glossary written now would describe intentions rather than code. Write them once there is real code to
-name. The design decisions that would become the first ADRs are already argued in
-`docs/superpowers/specs/2026-08-29-personal-site-design.md` (local only, not tracked).
+`CONTEXT.md` does not exist yet. Write it once the glossary would describe code rather than intentions.
+
+**ADRs are local only and not tracked** — `docs/adr/` is gitignored, alongside
+`docs/superpowers/specs/2026-08-29-personal-site-design.md` where most decisions are argued. A clone
+therefore has no ADRs in it; that is expected, not a missing file. Read them from the working tree
+when they are there, and proceed silently when they are not.
