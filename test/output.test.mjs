@@ -252,3 +252,21 @@ test('no font size is written as a literal', () => {
   }
 });
 
+test('every internal fragment link lands on an element that exists', () => {
+  // The link checker follows URLs but not fragments, so renaming a slug would
+  // leave the homepage pointing at an anchor that is no longer there — a link
+  // that still returns 200 and silently drops you at the top of the page.
+  let checked = 0;
+  for (const file of everyPage().filter((f) => !/404|_not-found/.test(f))) {
+    const html = fs.readFileSync(file, 'utf8');
+    for (const [, url, id] of html.matchAll(/href="(\/[^"#]*)#([^"]+)"/g)) {
+      const target = pageFor(url);
+      assert.ok(fs.existsSync(target), `${file}: ${url} does not exist`);
+      const targetHtml = fs.readFileSync(target, 'utf8');
+      assert.match(targetHtml, new RegExp(`id="${id}"`), `${file}: no #${id} on ${url}`);
+      checked++;
+    }
+  }
+  assert.ok(checked > 0, 'no fragment links found');
+});
+

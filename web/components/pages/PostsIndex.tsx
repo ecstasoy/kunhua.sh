@@ -1,7 +1,7 @@
 import { getAllPosts } from '@/lib/posts';
 import { HangingSection, HangingRow } from '@/components/HangingSection';
 import { Untranslated } from '@/components/Untranslated';
-import { DEFAULT_LOCALE, href, type Locale } from '@/lib/locale';
+import { DEFAULT_LOCALE, path, type Locale } from '@/lib/locale';
 
 export function PostsIndex({ locale }: { locale: Locale }) {
   const posts = getAllPosts(locale);
@@ -17,7 +17,7 @@ export function PostsIndex({ locale }: { locale: Locale }) {
             <div className="item-title">
               {/* An untranslated entry links straight to the source: no
                   English page is generated for it. */}
-              <a href={href(p.translated ? locale : DEFAULT_LOCALE, `/posts/${p.slug}/`)}>
+              <a href={path(p.translated ? locale : DEFAULT_LOCALE, `/posts/${p.slug}/`)}>
                 {p.title}
               </a>
             </div>

@@ -1,7 +1,7 @@
 import { GitHubIcon, MailIcon } from '@/components/Icons';
 import { EmailLink } from '@/components/Email';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { href, other, switchLabel, type Locale } from '@/lib/locale';
+import { path, other, switchLabel, type Locale } from '@/lib/locale';
 
 /**
  * Masthead, footer, and the language switch. The interface itself is the same
@@ -24,7 +24,7 @@ export function Shell({
     <div className="shell">
       <header className="masthead">
         <span className="brand">
-          <a href={href(locale, '/')} className="mono wordmark">kunhua.sh</a>
+          <a href={path(locale, '/')} className="mono wordmark">kunhua.sh</a>
           <span className="brand-icons">
             <a href="https://github.com/ecstasoy" aria-label="GitHub">
               <GitHubIcon />
@@ -35,9 +35,9 @@ export function Shell({
           </span>
         </span>
         <nav>
-          <a href={href(locale, '/posts/')}>Writing</a>
-          <a href={href(locale, '/projects/')}>Projects</a>
-          <a href={href(locale, '/about/')}>About</a>
+          <a href={path(locale, '/posts/')}>Writing</a>
+          <a href={path(locale, '/projects/')}>Projects</a>
+          <a href={path(locale, '/about/')}>About</a>
           <a href={altHref} className="locale-switch">{switchLabel[alt]}</a>
           <ThemeToggle />
         </nav>

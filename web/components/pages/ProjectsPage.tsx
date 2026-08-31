@@ -38,7 +38,7 @@ export function ProjectsPage({ locale }: { locale: Locale }) {
       </p>
 
       {projects.map((project) => (
-        <HangingSection key={project.slug} head={<Head project={project} />}>
+        <HangingSection key={project.slug} id={project.slug} head={<Head project={project} />}>
           {project.introHtml && (
             <HangingRow>
               <div className="prose" dangerouslySetInnerHTML={{ __html: project.introHtml }} />

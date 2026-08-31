@@ -2,7 +2,7 @@ import { getAllPosts } from '@/lib/posts';
 import { getAllProjects } from '@/lib/projects';
 import { HangingSection, HangingRow } from '@/components/HangingSection';
 import { Untranslated } from '@/components/Untranslated';
-import { DEFAULT_LOCALE, href, type Locale } from '@/lib/locale';
+import { DEFAULT_LOCALE, path, type Locale } from '@/lib/locale';
 
 export function Home({ locale }: { locale: Locale }) {
   const posts = getAllPosts(locale).slice(0, 3);
@@ -25,7 +25,7 @@ export function Home({ locale }: { locale: Locale }) {
             <div className="item-title">
               {/* An untranslated entry links straight to the source: no
                   English page is generated for it. */}
-              <a href={href(p.translated ? locale : DEFAULT_LOCALE, `/posts/${p.slug}/`)}>
+              <a href={path(p.translated ? locale : DEFAULT_LOCALE, `/posts/${p.slug}/`)}>
                 {p.title}
               </a>
             </div>
@@ -34,7 +34,7 @@ export function Home({ locale }: { locale: Locale }) {
           </HangingRow>
         ))}
         <HangingRow>
-          <a href={href(locale, '/posts/')} style={{ fontSize: 'var(--text-body)', color: 'var(--faint)', borderBottomColor: 'var(--rule)' }}>
+          <a href={path(locale, '/posts/')} style={{ fontSize: 'var(--text-body)', color: 'var(--faint)', borderBottomColor: 'var(--rule)' }}>
             All posts →
           </a>
         </HangingRow>
@@ -59,13 +59,14 @@ export function Home({ locale }: { locale: Locale }) {
         {projects.map((project) => (
           <HangingRow key={project.slug}>
             <div className="item-title">
-              <a href={href(locale, '/projects/')}>{project.name}</a>
+              {/* Lands on the project rather than the top of the page. */}
+              <a href={path(locale, `/projects/#${project.slug}`)}>{project.name}</a>
             </div>
             <p className="item-excerpt">{project.summary}</p>
           </HangingRow>
         ))}
         <HangingRow>
-          <a href={href(locale, '/projects/')} style={{ fontSize: 'var(--text-body)', color: 'var(--faint)', borderBottomColor: 'var(--rule)' }}>
+          <a href={path(locale, '/projects/')} style={{ fontSize: 'var(--text-body)', color: 'var(--faint)', borderBottomColor: 'var(--rule)' }}>
             All projects →
           </a>
         </HangingRow>

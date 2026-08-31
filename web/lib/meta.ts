@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { SITE, hrefLang, href, other, DEFAULT_LOCALE, type Locale } from './locale';
+import { SITE, hrefLang, path, other, DEFAULT_LOCALE, type Locale } from './locale';
 
 /**
  * A self-referencing canonical plus hreflang alternates. The alternate is
@@ -7,13 +7,13 @@ import { SITE, hrefLang, href, other, DEFAULT_LOCALE, type Locale } from './loca
  * the whole set, and pointing it at the home page tells a crawler the home
  * page is this article's translation.
  */
-export function alternates(locale: Locale, path: string, hasCounterpart = true): Metadata {
-  const self = `${SITE}${href(locale, path)}`;
+export function alternates(locale: Locale, route: string, hasCounterpart = true): Metadata {
+  const self = `${SITE}${path(locale, route)}`;
   const languages: Record<string, string> = { [hrefLang[locale]]: self };
   if (hasCounterpart) {
     const alt = other(locale);
-    languages[hrefLang[alt]] = `${SITE}${href(alt, path)}`;
-    languages['x-default'] = `${SITE}${href(DEFAULT_LOCALE, path)}`;
+    languages[hrefLang[alt]] = `${SITE}${path(alt, route)}`;
+    languages['x-default'] = `${SITE}${path(DEFAULT_LOCALE, route)}`;
   }
   return { alternates: { canonical: self, languages } };
 }
@@ -23,7 +23,7 @@ export function alternates(locale: Locale, path: string, hasCounterpart = true):
  * locale's home rather than a 404 — a switch that sometimes vanishes or
  * sometimes breaks reads as a broken site.
  */
-export function counterpart(locale: Locale, path: string, hasCounterpart: boolean) {
+export function counterpart(locale: Locale, route: string, hasCounterpart: boolean) {
   const alt = other(locale);
-  return hasCounterpart ? href(alt, path) : href(alt, '/');
+  return hasCounterpart ? path(alt, route) : path(alt, '/');
 }

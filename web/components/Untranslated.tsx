@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, href } from '@/lib/locale';
+import { DEFAULT_LOCALE, path } from '@/lib/locale';
 
 /**
  * Shown under an entry that has no version in the language being read.
@@ -10,7 +10,7 @@ export function Untranslated({ slug, kind }: { slug: string; kind: 'posts' | 'pr
   return (
     <p className="untranslated">
       Chinese only —{' '}
-      <a href={href(DEFAULT_LOCALE, target)}>read it in Chinese</a>
+      <a href={path(DEFAULT_LOCALE, target)}>read it in Chinese</a>
     </p>
   );
 }

@@ -6,17 +6,20 @@
  * lives here and no page reimplements the grid.
  */
 export function HangingSection({
+  id,
   label,
   head,
   children,
 }: {
+  /** Anchor target, so a link can land on this section rather than the top. */
+  id?: string;
   label?: React.ReactNode;
   /** Spans both columns. For a heading too wide for an 88px rail. */
   head?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <section className="hang">
+    <section className="hang" id={id}>
       {head ? (
         <div className="hang-head">{head}</div>
       ) : (
