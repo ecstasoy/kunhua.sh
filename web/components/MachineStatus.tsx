@@ -88,9 +88,15 @@ export function MachineStatus() {
       {uptime}
       <span style={{ color: 'var(--rule)' }}> · </span>
       {deployed}
-      {!fresh && (
-        <span style={{ color: 'var(--rule)' }}> · service unreachable</span>
-      )}
+      {/* How current the reading is, not how current the machine is. Without
+          it a number on screen carries no claim about when it was true, and
+          the only way to notice it had frozen would be to already know what it
+          should say. */}
+      <span style={{ color: 'var(--rule)' }}>
+        {fresh && now !== null
+          ? ` · read ${formatSince(snapshot.at, now)}`
+          : ' · service unreachable'}
+      </span>
     </p>
   );
 }
