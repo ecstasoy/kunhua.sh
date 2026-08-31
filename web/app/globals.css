@@ -534,3 +534,91 @@ pre code {
 .cover a:focus-visible {
   outline-offset: -2px;
 }
+
+/* --- Notes ---------------------------------------------------------------
+   The line under the grid, read by everyone and edited in place by the owner. */
+
+.topster-note {
+  font-size: var(--text-body);
+  line-height: 1.72;
+  color: var(--soft);
+  margin: 4px 0 0;
+  max-width: 52ch;
+}
+
+.topster-note-edit textarea {
+  font: inherit;
+  font-size: var(--text-body);
+  line-height: 1.72;
+  color: var(--soft);
+  background: none;
+  width: 100%;
+  max-width: 52ch;
+  margin-top: 4px;
+  padding: 4px 6px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  resize: vertical;
+}
+
+.topster-note-edit textarea::placeholder {
+  color: var(--faint);
+}
+
+.topster-note-state {
+  font-size: var(--text-nano);
+  color: var(--faint);
+}
+
+/* Shown to the owner only, so finding what still needs writing and writing it
+   are one action. A corner mark rather than an overlay: it must not obscure
+   the cover it is about. */
+.cover.unwritten {
+  position: relative;
+}
+.cover.unwritten::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* --- Sign-in ------------------------------------------------------------- */
+
+.signin {
+  max-width: 34ch;
+}
+.signin input {
+  font: inherit;
+  font-size: var(--text-body);
+  color: var(--ink);
+  background: none;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+.signin button {
+  font: inherit;
+  font-size: var(--text-body);
+  color: var(--ink);
+  background: none;
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.signin button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.signin-state {
+  font-size: var(--text-meta);
+  color: var(--faint);
+  margin-top: 10px;
+}

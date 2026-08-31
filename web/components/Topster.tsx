@@ -17,12 +17,24 @@ import {
   STORAGE_KEY,
   TOP_ALBUMS_ATTR,
   TOP_ALBUMS_URL,
+  NOTES_URL,
+  albumKey,
   type Album,
   type Size,
   type TopAlbums,
 } from '@/lib/topAlbums';
 
-function Cover({ album, onFocus }: { album: Album; onFocus: () => void }) {
+function Cover({
+  album,
+  editable,
+  onFocus,
+}: {
+  album: Album;
+  /* Marks what still needs writing, and only for the owner: finding the gaps
+     and filling them are then one action. */
+  editable: boolean;
+  onFocus: () => void;
+}) {
   const label = `${album.album} — ${album.artist}`;
   const inner = album.art ? (
     <img
@@ -47,7 +59,11 @@ function Cover({ album, onFocus }: { album: Album; onFocus: () => void }) {
   );
 
   return (
-    <li className="cover" onMouseEnter={onFocus} onFocus={onFocus}>
+    <li
+      className={editable && !album.note ? 'cover unwritten' : 'cover'}
+      onMouseEnter={onFocus}
+      onFocus={onFocus}
+    >
       {album.url ? (
         <a href={album.url} rel="noopener noreferrer" aria-label={label}>
           {inner}
@@ -65,6 +81,69 @@ function Cover({ album, onFocus }: { album: Album; onFocus: () => void }) {
         <span className="cover-artist">{album.artist}</span>
       </span>
     </li>
+  );
+}
+
+/**
+ * One album's note: read by everyone, edited in place by the owner.
+ *
+ * A field that saves when it loses focus. No form and no admin page — the
+ * ceremony is what would stop the notes being written at all.
+ *
+ * Keyed by album at the call site, so moving to another album remounts it and
+ * an unsaved draft cannot be attributed to the wrong record.
+ */
+function Note({
+  album,
+  editable,
+  onSaved,
+}: {
+  album: Album;
+  editable: boolean;
+  onSaved: (note: string) => void;
+}) {
+  const [draft, setDraft] = useState(album.note ?? '');
+  const [state, setState] = useState<'idle' | 'saving' | 'failed'>('idle');
+
+  if (!editable) {
+    return album.note ? <p className="topster-note">{album.note}</p> : null;
+  }
+
+  const save = async () => {
+    if (draft === (album.note ?? '')) return;
+    setState('saving');
+    try {
+      const res = await fetch(NOTES_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artist: album.artist, album: album.album, note: draft }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      setState('idle');
+      onSaved(draft);
+    } catch {
+      // The draft stays in the field: losing what was typed is worse than
+      // saying it did not save.
+      setState('failed');
+    }
+  };
+
+  return (
+    <div className="topster-note-edit">
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={save}
+        rows={2}
+        placeholder={`Note on ${album.album}`}
+        aria-label={`Note on ${album.album} by ${album.artist}`}
+      />
+      {state !== 'idle' && (
+        <span className="topster-note-state">
+          {state === 'saving' ? 'saving…' : 'not saved'}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -108,6 +187,22 @@ export function Topster() {
       clearInterval(poll);
     };
   }, []);
+
+  // Applied locally so a saved note shows at once rather than at the next
+  // poll, half an hour later.
+  const remember = (album: Album, note: string) => {
+    const key = albumKey(album);
+    setData((current) => {
+      if (!current) return current;
+      const periods = Object.fromEntries(
+        Object.entries(current.periods).map(([p, list]) => [
+          p,
+          list.map((a) => (albumKey(a) === key ? { ...a, note: note || null } : a)),
+        ]),
+      );
+      return { ...current, periods };
+    });
+  };
 
   const choose = (next: { period?: string; size?: Size }) => {
     const p = next.period ?? period;
@@ -178,6 +273,7 @@ export function Topster() {
               <Cover
                 key={`${a.artist}-${a.album}-${i}`}
                 album={a}
+                editable={data?.editable ?? false}
                 onFocus={() => setFocused(i)}
               />
             ))}
@@ -186,12 +282,19 @@ export function Topster() {
           {/* One caption below the grid rather than a label under every cover:
               at 5×5 there is no room for two lines of text per cell, and the
               grid would jump as names of different lengths wrapped. This is
-              also where an album's note will go. */}
+              also where an album's note goes. */}
           <p className="topster-caption" aria-live="polite">
             {caption.album}
             <span> · {caption.artist}</span>
             <span className="topster-plays">{` · ${caption.plays} plays`}</span>
           </p>
+
+          <Note
+            key={albumKey(caption)}
+            album={caption}
+            editable={data?.editable ?? false}
+            onSaved={(note) => remember(caption, note)}
+          />
         </div>
       </HangingRow>
     </HangingSection>

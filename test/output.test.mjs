@@ -493,3 +493,45 @@ test('the built stylesheet contains no declaration a browser will drop', () => {
         `repeat() counts that are not an integer or auto-fill/auto-fit: ${counts}`,
     );
 });
+
+test('the editor is reached only through the server saying so', () => {
+    // Asserting that no <textarea> ships would pass whatever the code did: the
+    // whole grid is absent from the static output, so nothing inside it can
+    // appear either. That is the "scanned 0 links" shape — a green check that
+    // cannot fail.
+    //
+    // What can be checked is the source: the editor's gate has to read the
+    // server's answer, not a value the page decides for itself. The guarantee
+    // itself is the session check on PUT /api/notes, which is tested in Go.
+    const src = fs.readFileSync(
+        path.join(import.meta.dirname, '..', 'web', 'components', 'Topster.tsx'), 'utf8');
+
+    const gates = [...src.matchAll(/editable=\{([^}]*)\}/g)].map((m) => m[1].trim());
+    assert.ok(gates.length > 0, 'nothing is gated on editable');
+    for (const gate of gates) {
+        assert.match(
+            gate,
+            /^data\?\.editable/,
+            `the editor is gated on \`${gate}\`, which the server does not decide`,
+        );
+    }
+});
+
+test('no admin token appears anywhere in the built site', () => {
+    // The token lives on the host and in the owner's keyboard. A sign-in page
+    // that carried one would hand writing to everybody.
+    const files = fs.readdirSync(OUT, { recursive: true })
+        .filter((f) => /\.(html|js|css|txt|json)$/.test(String(f)))
+        .map((f) => path.join(OUT, String(f)));
+
+    for (const file of files) {
+        const body = fs.readFileSync(file, 'utf8');
+        assert.doesNotMatch(body, /ADMIN_TOKEN/, `${path.relative(OUT, file)} names ADMIN_TOKEN`);
+        // A long opaque string assigned to something token-shaped.
+        assert.doesNotMatch(
+            body,
+            /token\s*[:=]\s*['"][A-Za-z0-9_\-]{24,}['"]/,
+            `${path.relative(OUT, file)} contains what looks like a literal token`,
+        );
+    }
+});

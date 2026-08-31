@@ -8,6 +8,7 @@ import {
 const album = (n: number) => ({
     artist: `Artist ${n}`, album: `Album ${n}`,
     url: `https://last.fm/${n}`, plays: 100 - n, art: n % 2 ? null : `/api/art/${'a'.repeat(64)}`,
+    note: n === 0 ? 'a note' : null,
 });
 
 const data = (counts: Record<string, number>): TopAlbums => ({
@@ -17,6 +18,7 @@ const data = (counts: Record<string, number>): TopAlbums => ({
     ),
     fetched_at: '2026-08-31T00:00:00Z',
     generated_at: '2026-08-31T12:00:00Z',
+    editable: false,
 });
 
 test('the grid slices to the chosen size', () => {

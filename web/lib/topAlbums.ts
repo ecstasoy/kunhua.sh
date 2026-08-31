@@ -10,6 +10,9 @@ export type Album = {
   plays: number;
   /** A path on this site, or null when no cover is stored. */
   art: string | null;
+  /** The owner's annotation. Null when there is none — never an empty string,
+   *  so "unwritten" and "emptied" cannot differ. */
+  note: string | null;
 };
 
 export type TopAlbums = {
@@ -19,6 +22,9 @@ export type TopAlbums = {
   /** RFC 3339. When the chart last fetched successfully. */
   fetched_at: string | null;
   generated_at: string;
+  /** Whether this browser may edit notes. Not a permission — the write
+   *  endpoint checks the session itself — only whether to offer the affordance. */
+  editable: boolean;
 };
 
 export const TOP_ALBUMS_URL = '/api/top-albums';
@@ -63,7 +69,8 @@ export function isTopAlbums(v: unknown): v is TopAlbums {
           typeof t.artist === 'string' &&
           typeof t.album === 'string' &&
           typeof t.plays === 'number' &&
-          (t.art === null || typeof t.art === 'string')
+          (t.art === null || typeof t.art === 'string') &&
+          (t.note === null || typeof t.note === 'string')
         );
       }),
   );
@@ -118,4 +125,12 @@ export function parseChoice(raw: string | null): { period: string; size: Size } 
     // A stored value from an older version, or another tab's nonsense.
     return fallback;
   }
+}
+
+export const NOTES_URL = '/api/notes';
+export const SESSION_URL = '/api/session';
+
+/** Identifies an album across a refetch: the chart position is not stable. */
+export function albumKey(a: Pick<Album, 'artist' | 'album'>): string {
+  return `${a.artist}\u0000${a.album}`;
 }

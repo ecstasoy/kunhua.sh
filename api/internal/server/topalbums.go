@@ -15,6 +15,8 @@ type albumJSON struct {
 	Plays  int    `json:"plays"`
 	// Art is a path on this site, or null when no cover is stored.
 	Art *string `json:"art"`
+	// Note is the owner's annotation, absent when there is none.
+	Note *string `json:"note"`
 }
 
 // topAlbumsResponse carries every period in one answer, so choosing a span on
@@ -28,6 +30,10 @@ type topAlbumsResponse struct {
 	// ran, so a chart that stopped updating can say so.
 	FetchedAt   *string `json:"fetched_at"`
 	GeneratedAt string  `json:"generated_at"`
+	// Editable tells the page whether to offer editing, and is the only thing
+	// that reveals a session. It is not a permission: the write endpoint
+	// checks the session itself.
+	Editable bool `json:"editable"`
 }
 
 func topAlbums(db *store.DB, cfg Config) http.HandlerFunc {
@@ -36,6 +42,12 @@ func topAlbums(db *store.DB, cfg Config) http.HandlerFunc {
 			Order:       lastfm.Periods,
 			Periods:     map[string][]albumJSON{},
 			GeneratedAt: cfg.Now().UTC().Format(time.RFC3339),
+			Editable:    cfg.Auth != nil && cfg.Auth.SignedIn(r),
+		}
+
+		notes, err := db.Notes(r.Context())
+		if err != nil {
+			notes = map[string]string{}
 		}
 
 		if stored, err := db.TopAlbums(r.Context()); err == nil {
@@ -46,6 +58,9 @@ func topAlbums(db *store.DB, cfg Config) http.HandlerFunc {
 					if a.ArtHash != "" {
 						at := "/api/art/" + a.ArtHash
 						entry.Art = &at
+					}
+					if note, ok := notes[store.NoteKey(a.Artist, a.Album)]; ok {
+						entry.Note = &note
 					}
 					out = append(out, entry)
 				}

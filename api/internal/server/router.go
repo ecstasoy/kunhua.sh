@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"kunhua.sh/api/internal/art"
+	"kunhua.sh/api/internal/auth"
 	"kunhua.sh/api/internal/host"
 	"kunhua.sh/api/internal/store"
 )
@@ -20,6 +21,9 @@ type Config struct {
 	ReleaseLink string
 	// Art is where cover images are stored.
 	Art art.Store
+	// Auth is nil when no admin token is configured, which disables writing
+	// rather than opening it.
+	Auth *auth.Auth
 
 	Uptime      func() (time.Duration, error)
 	SymlinkTime func(string) (time.Time, error)
@@ -50,6 +54,15 @@ func New(db *store.DB, log *slog.Logger, cfg Config) http.Handler {
 	mux.HandleFunc("GET /api/now-playing", nowPlaying(db, cfg))
 	mux.HandleFunc("GET /api/top-albums", topAlbums(db, cfg))
 	mux.HandleFunc("GET /api/art/{hash}", serveArt(cfg.Art))
+
+	mux.HandleFunc("GET /api/session", session(cfg.Auth))
+	mux.HandleFunc("POST /api/session", signIn(cfg.Auth))
+	mux.HandleFunc("DELETE /api/session", signOut(cfg.Auth))
+
+	// Every write goes through requireSession. Registering the guard here
+	// rather than inside the handler keeps it visible in the route table,
+	// where a new write cannot be added without deciding about it.
+	mux.HandleFunc("PUT /api/notes", requireSession(cfg.Auth, saveNote(db, cfg)))
 
 	// Middleware order matters:
 	// request ID first, then logging, then recover inside logging.

@@ -18,6 +18,7 @@ import (
 	_ "time/tzdata"
 
 	"kunhua.sh/api/internal/art"
+	"kunhua.sh/api/internal/auth"
 	"kunhua.sh/api/internal/job"
 	"kunhua.sh/api/internal/lastfm"
 	"kunhua.sh/api/internal/server"
@@ -60,9 +61,18 @@ func run(log *slog.Logger) error {
 	}
 	log.Info("migrated", "db", dbPath)
 
+	// Nil when the token is absent or too short, which disables writing rather
+	// than opening it. Said out loud, because a silently read-only service is
+	// indistinguishable from a broken one.
+	authn := auth.New(os.Getenv("ADMIN_TOKEN"), db, time.Now)
+	if authn == nil {
+		log.Warn("no usable ADMIN_TOKEN; notes cannot be written",
+			"min_length", auth.MinTokenLength)
+	}
+
 	srv := &http.Server{
 		Addr:    addr,
-		Handler: server.New(db, log, server.Config{ReleaseLink: releaseLink, Art: arts}),
+		Handler: server.New(db, log, server.Config{ReleaseLink: releaseLink, Art: arts, Auth: authn}),
 		// Without ReadHeaderTimeout a connection that sends half a request
 		// header holds a slot indefinitely.
 		ReadHeaderTimeout: 5 * time.Second,
