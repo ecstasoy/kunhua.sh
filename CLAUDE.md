@@ -91,6 +91,31 @@ else, through a sudoers rule naming that unit literally.
 it with the host's, failing the deploy when they differ; installing it is `sudo bash ~/bootstrap.sh`
 as `deploy`.
 
+## Backups
+
+The database goes to Backblaze B2 daily, and `data/art/` does not — covers can be
+fetched again. `job_runs` records the outcome, so a backup that stopped working is visible the same
+way a fetcher that stopped working is.
+
+Two keys, and the split is the point. The host holds one that can **only** write: it cannot read
+back, list, or delete, so taking the machine does not mean being able to destroy the history. The
+read-only key lives in the owner's password manager and is used from a laptop, never installed on the
+host. Retention is a bucket lifecycle rule, because the machine's key cannot delete.
+
+**B2's web console cannot make a write-only key** — its "Write Only" preset also grants `deleteFiles`
+and `writeBucketLifecycleRules`, either of which erases the history. Only `b2_create_key` with
+`capabilities: ["writeFiles"]` does, which is what `deploy/b2-write-key.sh` is for.
+
+**The console also does not list keys created through the API.** It showed two while four existed.
+Ask the API, not the page.
+
+Snapshots go through `VACUUM INTO`, never a file copy. Under WAL a copy of `app.db` taken while the
+service runs opens with no tables at all — demonstrated by a test, not taken on trust.
+
+`deploy/restore-drill.sh` pulls the newest copy back and asserts it holds notes. Run it after
+changing anything about the backup: a script that first executes during a disaster has not been
+written.
+
 ## Agent skills
 
 ### Issue tracker

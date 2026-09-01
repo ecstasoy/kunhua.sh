@@ -23,12 +23,31 @@ command -v sqlite3 >/dev/null || { echo "this needs sqlite3" >&2; exit 1; }
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
+# curl -f discards the response body, which is where B2 explains itself.
+call() {
+  local label=$1; shift
+  local out status
+  out=$(curl -sS -w '\n%{http_code}' "$@")
+  status=${out##*$'\n'}
+  out=${out%$'\n'*}
+  if [ "$status" != "200" ]; then
+    echo "$label returned $status:" >&2
+    jq . <<<"$out" 2>/dev/null >&2 || echo "$out" >&2
+    exit 1
+  fi
+  printf '%s' "$out"
+}
+
 echo "→ authorizing"
-auth=$(curl -fsS -u "$KEY_ID:$KEY" "$API")
+auth=$(call "authorize" -u "$KEY_ID:$KEY" "$API")
 token=$(jq -r '.authorizationToken' <<<"$auth")
 api_url=$(jq -r '.apiInfo.storageApi.apiUrl' <<<"$auth")
 download_url=$(jq -r '.apiInfo.storageApi.downloadUrl' <<<"$auth")
-bucket_id=$(jq -r --arg b "$BUCKET" '.apiInfo.storageApi.buckets[] | select(.name==$b) | .id' <<<"$auth")
+# Under allowed, not directly under storageApi: v4 moved it there for
+# multi-bucket keys, and this script kept the older shape after the Go client
+# was corrected.
+bucket_id=$(jq -r --arg b "$BUCKET" \
+  '.apiInfo.storageApi.allowed.buckets[]? | select(.name==$b) | .id' <<<"$auth")
 
 [ -n "$bucket_id" ] || { echo "the key does not name the bucket $BUCKET" >&2; exit 1; }
 
@@ -36,7 +55,7 @@ if [ $# -ge 1 ]; then
   name="app-$1.db"
 else
   echo "→ finding the most recent copy"
-  name=$(curl -fsS -H "Authorization: $token" \
+  name=$(call "list files" -H "Authorization: $token" \
     -H 'Content-Type: application/json' \
     -d "{\"bucketId\":\"$bucket_id\",\"maxFileCount\":1000}" \
     "$api_url/b2api/v4/b2_list_file_names" \
@@ -45,7 +64,7 @@ fi
 [ -n "$name" ] || { echo "no backups found in $BUCKET" >&2; exit 1; }
 
 echo "→ downloading $name"
-curl -fsS -H "Authorization: $token" \
+curl -sS -f -H "Authorization: $token" \
   "$download_url/file/$BUCKET/$name" -o "$work/restored.db"
 
 echo "→ checking it is a database and not a corrupted file"
