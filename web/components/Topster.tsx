@@ -258,11 +258,11 @@ export function Topster() {
     return <span {...{ [TOP_ALBUMS_ATTR]: 'none' }} hidden />;
   }
 
-  // A remembered index can outlive the grid it pointed into.
-  // Pinned wins over hovered, so moving the pointer towards the field cannot
-  // change what is being annotated. An index can outlive the grid it pointed
-  // into, hence the fallback.
-  const caption = albums[pinned ?? hovered ?? 0] ?? albums[0];
+  // Pinned wins over hovered, so moving the pointer towards the note field
+  // cannot change what is being annotated. An index can outlive the grid it
+  // pointed into, hence the fallback.
+  const wanted = pinned ?? hovered ?? 0;
+  const index = albums[wanted] ? wanted : 0;
 
   return (
     <HangingSection label="Albums">
@@ -321,21 +321,48 @@ export function Topster() {
               at 5×5 there is no room for two lines of text per cell, and the
               grid would jump as names of different lengths wrapped. This is
               also where an album's note goes. */}
-          <p className="topster-caption" aria-live="polite">
-            {caption.album}
-            <span> · {caption.artist}</span>
-            <span className="topster-plays">{` · ${caption.plays} plays`}</span>
-          </p>
-
-          <Note
-            key={albumKey(caption)}
-            album={caption}
-            editable={data?.editable ?? false}
-            /* Focused when the album was chosen deliberately, so picking a
-               cover and typing are one gesture rather than three. */
-            takeFocus={pinned !== null}
-            onSaved={(note) => remember(caption, note)}
-          />
+          {/* Every album's detail is laid out in the same grid cell, so the
+              block is as tall as the longest note in this grid and moving
+              across the covers changes what is read without moving anything
+              below it. Only one is visible; the rest hold the space. */}
+          <div className="topster-detail" aria-live="polite">
+            {albums.map((a, i) => {
+              const shown = i === index;
+              return (
+                <div
+                  key={albumKey(a)}
+                  className="topster-detail-slot"
+                  data-shown={shown}
+                  // visibility, not hidden: the slot has to keep its space.
+                  // Out of the accessibility tree and out of tab order too,
+                  // or twenty-five invisible notes would be read aloud.
+                  aria-hidden={!shown}
+                  inert={!shown}
+                >
+                  <p className="topster-caption">
+                    {a.album}
+                    <span> · {a.artist}</span>
+                    <span className="topster-plays">{` · ${a.plays} plays`}</span>
+                  </p>
+                  {shown ? (
+                    <Note
+                      key={albumKey(a)}
+                      album={a}
+                      editable={data?.editable ?? false}
+                      /* Focused when the album was chosen deliberately, so
+                         picking a cover and typing are one gesture. */
+                      takeFocus={pinned !== null}
+                      onSaved={(note) => remember(a, note)}
+                    />
+                  ) : (
+                    // The measured height has to match what the visible slot
+                    // would be, so the placeholder is the note itself.
+                    a.note && <p className="topster-note">{a.note}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </HangingRow>
     </HangingSection>

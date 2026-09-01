@@ -449,8 +449,6 @@ pre code {
   font-size: var(--text-meta);
   color: var(--soft);
   margin: 8px 0 0;
-  /* Fixed height, so moving across the grid does not shift the page. */
-  min-height: 1.4em;
 }
 
 .topster-plays {
@@ -631,4 +629,17 @@ pre code {
 .cover.pinned .cover-img,
 .cover.pinned .cover-blank {
   filter: none;
+}
+
+/* Every album's detail occupies the same cell, so the block is as tall as the
+   longest note in the grid and hovering changes what is read without moving
+   what is below. */
+.topster-detail {
+  display: grid;
+}
+.topster-detail-slot {
+  grid-area: 1 / 1;
+}
+.topster-detail-slot[data-shown='false'] {
+  visibility: hidden;
 }
