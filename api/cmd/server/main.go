@@ -19,6 +19,7 @@ import (
 
 	"kunhua.sh/api/internal/art"
 	"kunhua.sh/api/internal/auth"
+	"kunhua.sh/api/internal/backup"
 	"kunhua.sh/api/internal/job"
 	"kunhua.sh/api/internal/lastfm"
 	"kunhua.sh/api/internal/server"
@@ -47,6 +48,7 @@ func run(log *slog.Logger) error {
 	releaseLink := env("APP_RELEASE_LINK", "/srv/kunhua.sh/current")
 	// Under the one path the unit allows the service to write.
 	arts := art.Store{Dir: env("APP_ART_DIR", "/srv/kunhua.sh/data/art")}
+	backupDir := env("APP_BACKUP_DIR", "/srv/kunhua.sh/data/backup")
 
 	db, err := store.Open(dbPath)
 	if err != nil {
@@ -86,7 +88,7 @@ func run(log *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	waitJobs := startJobs(ctx, db, log, arts)
+	waitJobs := startJobs(ctx, db, log, arts, backupDir)
 
 	// ListenAndServe blocks, so it runs on its own goroutine and reports
 	// through a channel. Calling it here instead would mean a failure to bind
@@ -124,16 +126,28 @@ func run(log *slog.Logger) error {
 // exist: the endpoint reports nothing fetched and the page shows nothing,
 // rather than a job failing every minute and filling the journal with the
 // same line.
-func startJobs(ctx context.Context, db *store.DB, log *slog.Logger, arts art.Store) func() {
-	key, user := os.Getenv("LASTFM_API_KEY"), os.Getenv("LASTFM_USER")
-	if key == "" || user == "" {
+func startJobs(ctx context.Context, db *store.DB, log *slog.Logger, arts art.Store, backupDir string) func() {
+	var jobs []job.Job
+
+	if key, user := os.Getenv("LASTFM_API_KEY"), os.Getenv("LASTFM_USER"); key != "" && user != "" {
+		log.Info("last.fm configured", "user", user)
+		c := lastfm.New(key, user)
+		jobs = append(jobs, c.Job(db, arts), c.TopJob(db, arts))
+	} else {
 		log.Info("last.fm not configured; now-playing disabled")
-		return func() {}
 	}
 
-	log.Info("last.fm configured", "user", user)
-	c := lastfm.New(key, user)
-	return job.Start(ctx, db, log, c.Job(db, arts), c.TopJob(db, arts))
+	// The backup runs whether or not a destination is set: without one it
+	// writes locally and reports the run as failed, because a copy that does
+	// not leave the machine does not cover the case it exists for.
+	dest := backup.NewB2(os.Getenv("B2_KEY_ID"), os.Getenv("B2_KEY"), os.Getenv("B2_BUCKET"))
+	if !dest.Configured() {
+		log.Warn("no offsite backup destination; snapshots stay on this machine",
+			"dir", backupDir)
+	}
+	jobs = append(jobs, backup.Job(db, backupDir, dest))
+
+	return job.Start(ctx, db, log, jobs...)
 }
 
 func env(key, def string) string {
