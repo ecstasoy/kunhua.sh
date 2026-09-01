@@ -1,16 +1,19 @@
 package backup
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -33,14 +36,19 @@ func testDB(t *testing.T) *store.DB {
 // A stand-in for B2, recording what arrived and verifying it the way B2 does.
 type fakeB2 struct {
 	*httptest.Server
-	uploaded map[string][]byte
-	bucketID string
-	requests int
+	uploaded     map[string][]byte
+	bucketID     string
+	capabilities []string
+	requests     int
 }
 
 func newFakeB2(t *testing.T, bucket string) *fakeB2 {
 	t.Helper()
-	f := &fakeB2{uploaded: map[string][]byte{}, bucketID: "bucket-id-1"}
+	f := &fakeB2{
+		uploaded:     map[string][]byte{},
+		bucketID:     "bucket-id-1",
+		capabilities: []string{"listBuckets", "writeFiles"},
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/b2api/v4/b2_authorize_account", func(w http.ResponseWriter, r *http.Request) {
@@ -49,12 +57,18 @@ func newFakeB2(t *testing.T, bucket string) *fakeB2 {
 			http.Error(w, `{"code":"unauthorized"}`, http.StatusUnauthorized)
 			return
 		}
+		// Shaped from a real v4 response, not from the code under test: the
+		// first fake put buckets one level too high, matching the same mistake
+		// in the client, so both were wrong and the tests were green.
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"authorizationToken": "auth-token",
 			"apiInfo": map[string]any{
 				"storageApi": map[string]any{
-					"apiUrl":  f.URL,
-					"buckets": []map[string]string{{"id": f.bucketID, "name": bucket}},
+					"apiUrl": f.URL,
+					"allowed": map[string]any{
+						"capabilities": f.capabilities,
+						"buckets":      []map[string]string{{"id": f.bucketID, "name": bucket}},
+					},
 				},
 			},
 		})
@@ -253,4 +267,61 @@ func keys(m map[string][]byte) []string {
 		out = append(out, k)
 	}
 	return out
+}
+
+// The response shape is the thing that broke in production while every test
+// passed, so it is pinned to a capture of the real one.
+func TestTheAuthorizeResponseIsReadFromWhereB2PutsIt(t *testing.T) {
+	// Trimmed from an actual v4 response.
+	const real = `{
+	  "accountId": "8545b6aaac2d",
+	  "apiInfo": {
+	    "storageApi": {
+	      "allowed": {
+	        "buckets": [{"id": "b805a4352b965abaaa0c021d", "name": "kunhua-sh-backup"}],
+	        "capabilities": ["listBuckets", "writeFiles"],
+	        "namePrefix": null
+	      },
+	      "apiUrl": "https://api005.backblazeb2.com",
+	      "downloadUrl": "https://f005.backblazeb2.com"
+	    }
+	  },
+	  "authorizationToken": "4_00..."
+	}`
+
+	var out authResponse
+	if err := json.Unmarshal([]byte(real), &out); err != nil {
+		t.Fatal(err)
+	}
+	if out.APIInfo.StorageAPI.APIURL != "https://api005.backblazeb2.com" {
+		t.Errorf("apiUrl = %q", out.APIInfo.StorageAPI.APIURL)
+	}
+	buckets := out.APIInfo.StorageAPI.Allowed.Buckets
+	if len(buckets) != 1 || buckets[0].Name != "kunhua-sh-backup" {
+		t.Errorf("buckets = %+v; they live under allowed", buckets)
+	}
+	if len(out.APIInfo.StorageAPI.Allowed.Capabilities) != 2 {
+		t.Errorf("capabilities = %v", out.APIInfo.StorageAPI.Allowed.Capabilities)
+	}
+}
+
+// The key B2's web console calls "Write Only" carries deleteFiles and
+// writeBucketLifecycleRules, either of which lets whoever holds this machine
+// destroy the history the backup exists to preserve.
+func TestAKeyThatCanDeleteIsReportedAsTooPowerful(t *testing.T) {
+	var buf bytes.Buffer
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&buf, nil)))
+	t.Cleanup(func() { slog.SetDefault(prev) })
+
+	warnIfTooPowerful([]string{"listBuckets", "writeFiles", "deleteFiles"})
+	if !strings.Contains(buf.String(), "deleteFiles") {
+		t.Errorf("a key that can delete was not reported:\n%s", buf.String())
+	}
+
+	buf.Reset()
+	warnIfTooPowerful([]string{"listBuckets", "writeFiles"})
+	if buf.Len() != 0 {
+		t.Errorf("a write-only key was reported anyway:\n%s", buf.String())
+	}
 }

@@ -10,9 +10,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"time"
 )
 
@@ -50,10 +52,13 @@ type authResponse struct {
 	APIInfo            struct {
 		StorageAPI struct {
 			APIURL  string `json:"apiUrl"`
-			Buckets []struct {
-				ID   string `json:"id"`
-				Name string `json:"name"`
-			} `json:"buckets"`
+			Allowed struct {
+				Capabilities []string `json:"capabilities"`
+				Buckets      []struct {
+					ID   string `json:"id"`
+					Name string `json:"name"`
+				} `json:"buckets"`
+			} `json:"allowed"`
 		} `json:"storageApi"`
 	} `json:"apiInfo"`
 }
@@ -127,7 +132,9 @@ func (b *B2) authorize(ctx context.Context) (*authResponse, string, error) {
 		return nil, "", fmt.Errorf("authorize response: %w", err)
 	}
 
-	for _, bucket := range out.APIInfo.StorageAPI.Buckets {
+	warnIfTooPowerful(out.APIInfo.StorageAPI.Allowed.Capabilities)
+
+	for _, bucket := range out.APIInfo.StorageAPI.Allowed.Buckets {
 		if bucket.Name == b.Bucket {
 			return &out, bucket.ID, nil
 		}
@@ -174,4 +181,24 @@ func (b *B2) uploadURL(ctx context.Context, auth *authResponse, bucketID string)
 func snippet(r io.Reader) string {
 	b, _ := io.ReadAll(io.LimitReader(r, errorSnippet))
 	return string(bytes.TrimSpace(b))
+}
+
+// Capabilities this machine's key must not have. The point of a write-only
+// credential is that taking the machine does not mean being able to destroy
+// the history; B2's "Write Only" preset grants deleteFiles and lifecycle
+// rules, which defeats it.
+var forbidden = []string{"deleteFiles", "readFiles", "writeBucketLifecycleRules"}
+
+func warnIfTooPowerful(capabilities []string) {
+	var extra []string
+	for _, c := range capabilities {
+		if slices.Contains(forbidden, c) {
+			extra = append(extra, c)
+		}
+	}
+	if len(extra) > 0 {
+		slog.Warn("the backup key can do more than write",
+			"capabilities", extra,
+			"why", "an attacker holding this machine could destroy the backup history")
+	}
 }
