@@ -7,7 +7,7 @@ export const metadata = alternates('en', '/about/');
 export default function Page() {
   return (
     <Shell locale="en" altHref="/about/">
-      <AboutPage />
+      <AboutPage locale="en" />
     </Shell>
   );
 }

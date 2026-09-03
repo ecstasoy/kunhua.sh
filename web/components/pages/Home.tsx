@@ -16,10 +16,10 @@ export function Home({ locale }: { locale: Locale }) {
       {/* The opening lines speak in the owner's name and are shared by both
           locales, so they are not translated. */}
       <p className="serif" style={{ fontSize: 'var(--text-lede)', lineHeight: 1.5, margin: 0 }}>
-        {site().name}
+        {site(locale).name}
       </p>
       <p style={{ fontSize: 'var(--text-body)', lineHeight: 1.72, color: 'var(--soft)', maxWidth: '48ch', margin: '4px 0 6px' }}>
-        {site().subtitle}
+        {site(locale).subtitle}
       </p>
 
       <HangingSection label="Writing">
@@ -48,9 +48,9 @@ export function Home({ locale }: { locale: Locale }) {
           {/* Shared by both locales, so it says what RIME is rather than what
               was contributed — the link lands on the merged PRs themselves. */}
           <div className="item-title">
-            <a href={site().openSource.url}>{site().openSource.name}</a>
+            <a href={site(locale).openSource.url}>{site(locale).openSource.name}</a>
             <span style={{ color: 'var(--soft)', fontWeight: 400 }}>
-              {`: ${site().openSource.note}`}
+              {`: ${site(locale).openSource.note}`}
             </span>
           </div>
         </HangingRow>

@@ -12,18 +12,19 @@ import path from 'node:path';
 // a rule that is a pure function of the file.
 const FILE = path.join(import.meta.dirname, '..', 'content', 'site.yml');
 
+// Fields that are one line whatever the language.
 const REQUIRED = [
     'name',
     'subtitle',
     'copyright',
     'github',
-    'openers.posts',
-    'openers.projects',
-    'openers.about',
     'open_source.name',
     'open_source.note',
     'open_source.url',
 ];
+
+const OPENERS = ['posts', 'projects', 'about'];
+const LOCALES = ['zh', 'en'];
 
 // Read without a YAML library. The parser lives in web/node_modules and this
 // runs from the repository root, and using the same parser as the code under
@@ -33,17 +34,18 @@ const REQUIRED = [
 // The file is two levels deep and all values are strings, so this is enough.
 function read(): Map<string, string> {
     const out = new Map<string, string>();
-    let section = '';
+    const path_: string[] = [];
     for (const line of fs.readFileSync(FILE, 'utf8').split('\n')) {
         if (line.trim() === '' || line.trimStart().startsWith('#')) continue;
         const match = line.match(/^(\s*)([\w-]+):\s*(.*)$/);
         if (!match) continue;
         const [, indent, key, value] = match;
-        if (indent === '') {
-            section = value.trim() === '' ? key : '';
-            if (section === '') out.set(key, value.trim());
+        const depth = indent.length / 2;
+        path_.length = depth;
+        if (value.trim() === '') {
+            path_.push(key);
         } else {
-            out.set(`${section}.${key}`, value.trim());
+            out.set([...path_, key].join('.'), value.trim());
         }
     }
     return out;
@@ -71,13 +73,26 @@ test('the reader is checking the same fields these tests are', () => {
     }
 });
 
-test('the openers are the same in both languages, by design', () => {
-    // They are the owner's own words rather than interface text, so there is
-    // one of each and no translation. A locale key appearing here would mean
-    // that decision had changed without anyone saying so.
-    const openers = [...read().keys()]
-        .filter((k) => k.startsWith('openers.'))
-        .map((k) => k.slice('openers.'.length))
-        .sort();
-    assert.deepEqual(openers, ['about', 'posts', 'projects']);
+test('every opener is either one line or one per language, never half', () => {
+    // A plain line means the two sides read the same, which is a decision. A
+    // mapping means they differ, and then both have to be there — a half-filled
+    // one renders an empty opening line rather than saying anything.
+    const doc = read();
+    for (const key of OPENERS) {
+        const shared = doc.has(`openers.${key}`);
+        const perLocale = LOCALES.filter((l) => doc.has(`openers.${key}.${l}`));
+
+        if (shared) {
+            assert.notEqual(doc.get(`openers.${key}`), '', `openers.${key} is blank`);
+            assert.deepEqual(perLocale, [], `openers.${key} is both shared and per-language`);
+            continue;
+        }
+        assert.deepEqual(
+            perLocale, LOCALES,
+            `openers.${key} names ${perLocale.join(', ') || 'no language'}, not every one`,
+        );
+        for (const l of LOCALES) {
+            assert.notEqual(doc.get(`openers.${key}.${l}`), '', `openers.${key}.${l} is blank`);
+        }
+    }
 });

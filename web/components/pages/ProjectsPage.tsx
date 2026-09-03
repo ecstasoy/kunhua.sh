@@ -35,7 +35,7 @@ export function ProjectsPage({ locale }: { locale: Locale }) {
   return (
     <div>
       <p className="serif" style={{ fontSize: 'var(--text-lede)', lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
-        {site().openers.projects}
+        {site(locale).openers.projects}
       </p>
 
       {projects.map((project) => (

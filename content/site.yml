@@ -11,12 +11,25 @@
 name: Kunhua Huang
 subtitle: MSCS @Northeastern University
 
-# One opener per page. The same in both languages: these are the owner's own
-# words rather than something to translate.
+# One opener per page.
+#
+# A plain string means the same line in both languages, which is a decision
+# rather than an omission. A mapping means they differ, and then both have to
+# be there or the build fails.
 openers:
-  posts: 你的我的
-  projects: 这里那里
+  # Written in English to begin with: it is what the first email sent from
+  # China said, in 1987. It reads the same on both sides.
   about: Across the Great Wall we can reach every corner in the world
+
+  posts:
+    zh: 你的我的
+    # TODO(kunhua): 英文版。这两句是你的话，我不代写。
+    # 在填之前英文页显示中文，跟以前一样。
+    en: 你的我的
+  projects:
+    zh: 这里那里
+    # TODO(kunhua): 同上。
+    en: 这里那里
 
 copyright: © 2026 Kunhua Huang
 
