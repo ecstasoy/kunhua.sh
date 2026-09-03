@@ -12,8 +12,13 @@ import { DEFAULT_LOCALE, LOCALES, type Locale } from '@/lib/locale';
 export type Site = {
   name: string;
   subtitle: string;
-  /** One line per page, already resolved for the locale being rendered. */
-  openers: { posts: string; projects: string; about: string };
+  /**
+   * One opener per page, resolved for the locale being rendered.
+   *
+   * Null when the key is absent, which is how a page says it wants no opening
+   * line. A key that is present but empty is a mistake and fails the build.
+   */
+  openers: { posts: string | null; projects: string | null; about: string | null };
   copyright: string;
   github: string;
   openSource: { name: string; note: string; url: string };
@@ -35,9 +40,19 @@ function required(value: unknown, where: string): string {
  * taken as written. A mapping must name every locale: a half-filled one would
  * render an empty opener rather than say anything.
  */
-function localized(value: unknown, locale: Locale, where: string): string {
+function localized(value: unknown, locale: Locale, where: string): string | null {
+  // Absent means the page deliberately has no opener. Present but empty means
+  // somebody meant to write one, so it fails rather than leaving a silent gap.
+  if (value === undefined) return null;
   if (typeof value === 'string') return required(value, where);
-  if (typeof value !== 'object' || value === null) {
+  // `about:` with nothing after it parses as null. Saying so beats calling it
+  // the wrong shape, which is what somebody who left it blank would read.
+  if (value === null) {
+    throw new Error(
+      `content/site.yml: ${where} is empty — write a line, or remove the key for no opener`,
+    );
+  }
+  if (typeof value !== 'object') {
     throw new Error(`content/site.yml: ${where} is neither a line nor a mapping of languages`);
   }
   const byLocale = value as Record<string, unknown>;
@@ -61,6 +76,16 @@ export function site(locale: Locale = DEFAULT_LOCALE): Site {
   }
 
   const openers = (raw.openers ?? {}) as Record<string, unknown>;
+
+  // A misspelled key would otherwise look exactly like a deliberate omission.
+  const known = ['posts', 'projects', 'about'];
+  for (const key of Object.keys(openers)) {
+    if (!known.includes(key)) {
+      throw new Error(
+        `content/site.yml: openers.${key} is not a page (expected ${known.join(', ')})`,
+      );
+    }
+  }
   const openSource = (raw.open_source ?? {}) as Record<string, unknown>;
 
   const resolved: Site = {

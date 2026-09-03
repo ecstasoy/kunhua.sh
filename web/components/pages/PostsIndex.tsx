@@ -8,9 +8,22 @@ export function PostsIndex({ locale }: { locale: Locale }) {
   const posts = getAllPosts(locale);
   return (
     <div>
-      <p className="serif" style={{ fontSize: 'var(--text-lede)', lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
-        {site(locale).openers.posts}
-      </p>
+      {/* Absent when the page wants no opening line. whiteSpace keeps any
+          newlines the author wrote while still wrapping to the measure. */}
+      {site(locale).openers.posts && (
+        <p
+          className="serif"
+          style={{
+            fontSize: 'var(--text-lede)',
+            lineHeight: 1.72,
+            maxWidth: '48ch',
+            margin: '0 0 6px',
+            whiteSpace: 'pre-line',
+          }}
+        >
+          {site(locale).openers.posts}
+        </p>
+      )}
 
       <HangingSection label="Writing">
         {posts.map((p) => (

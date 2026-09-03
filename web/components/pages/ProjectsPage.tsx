@@ -34,9 +34,22 @@ export function ProjectsPage({ locale }: { locale: Locale }) {
   const projects = getAllProjects(locale);
   return (
     <div>
-      <p className="serif" style={{ fontSize: 'var(--text-lede)', lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
-        {site(locale).openers.projects}
-      </p>
+      {/* Absent when the page wants no opening line. whiteSpace keeps any
+          newlines the author wrote while still wrapping to the measure. */}
+      {site(locale).openers.projects && (
+        <p
+          className="serif"
+          style={{
+            fontSize: 'var(--text-lede)',
+            lineHeight: 1.72,
+            maxWidth: '48ch',
+            margin: '0 0 6px',
+            whiteSpace: 'pre-line',
+          }}
+        >
+          {site(locale).openers.projects}
+        </p>
+      )}
 
       {projects.map((project) => (
         <HangingSection key={project.slug} id={project.slug} head={<Head project={project} />}>

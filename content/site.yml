@@ -11,11 +11,18 @@
 name: Kunhua Huang
 subtitle: MSCS @Northeastern University
 
-# One opener per page.
+# One opener per page. Four things are possible:
 #
-# A plain string means the same line in both languages, which is a decision
-# rather than an omission. A mapping means they differ, and then both have to
-# be there or the build fails.
+#   about: one line              same in both languages, which is a decision
+#   about: {zh: …, en: …}        they differ; both have to be there
+#   about: |                     a block keeps the line breaks you write
+#     first line
+#     second line
+#   (key removed)                that page has no opening line
+#
+# Leaving a key with nothing after it fails the build. That is the case where
+# somebody meant to write something, and a page with a silent gap where its
+# opening line should be looks exactly like a page that never had one.
 openers:
   # Written in English to begin with: it is what the first email sent from
   # China said, in 1987. It reads the same on both sides.

@@ -73,6 +73,20 @@ test('the reader is checking the same fields these tests are', () => {
     }
 });
 
+test('an opener key is one of the pages, spelled correctly', () => {
+    // A misspelled key looks exactly like a deliberate omission, and an
+    // omission is how a page says it wants no opening line. One of the two has
+    // to be detectable, so unknown keys are refused.
+    const keys = new Set(
+        [...read().keys()]
+            .filter((k) => k.startsWith('openers.'))
+            .map((k) => k.split('.')[1]),
+    );
+    for (const key of keys) {
+        assert.ok(OPENERS.includes(key), `openers.${key} is not a page`);
+    }
+});
+
 test('every opener is either one line or one per language, never half', () => {
     // A plain line means the two sides read the same, which is a decision. A
     // mapping means they differ, and then both have to be there — a half-filled
@@ -81,6 +95,9 @@ test('every opener is either one line or one per language, never half', () => {
     for (const key of OPENERS) {
         const shared = doc.has(`openers.${key}`);
         const perLocale = LOCALES.filter((l) => doc.has(`openers.${key}.${l}`));
+
+        // Absent entirely is allowed: that page has no opening line.
+        if (!shared && perLocale.length === 0) continue;
 
         if (shared) {
             assert.notEqual(doc.get(`openers.${key}`), '', `openers.${key} is blank`);
