@@ -535,3 +535,38 @@ test('no admin token appears anywhere in the built site', () => {
         );
     }
 });
+
+test('no font stack is written out at its point of use', () => {
+    // The fallback chain used to be repeated at every declaration and had
+    // drifted into three different chains for one font, so a reader without
+    // the webfont got a different monospace on the dates than in the code.
+    // Same rule as colour and size: name the token, never the value.
+    const css = fs
+        .readdirSync(path.join(OUT, '_next/static/chunks'))
+        .filter((f) => f.endsWith('.css'))
+        .map((f) => fs.readFileSync(path.join(OUT, '_next/static/chunks', f), 'utf8'))
+        .join('');
+
+    // The three definitions are the one place a family may be spelled out.
+    const defined = [...css.matchAll(/--(?:sans|serif|mono):[^;}]*/g)].map((m) => m[0]);
+    assert.equal(defined.length, 3, `expected three stack tokens, found ${defined.length}`);
+
+    // next/font generates two things that name a family directly: the
+    // @font-face blocks for what it downloaded, and a utility class per face.
+    // Both are its own output, identified by shape rather than by guessing at
+    // the family names.
+    const ours = css
+        .replace(/@font-face\s*\{[^}]*\}/g, '')
+        .replace(/\.[\w-]*module__[\w-]*[^{]*\{[^}]*\}/g, '');
+
+    let uses = 0;
+    for (const [, value] of ours.matchAll(/font-family:([^;}]*)/g)) {
+        assert.match(
+            value.trim(),
+            /^var\(--(sans|serif|mono)\)$/,
+            `font-family: ${value.trim()} names a family instead of a token`,
+        );
+        uses++;
+    }
+    assert.ok(uses > 0, 'no font-family declarations were checked');
+});
