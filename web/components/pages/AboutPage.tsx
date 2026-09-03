@@ -29,11 +29,15 @@ export function AboutPage({ locale }: { locale: Locale }) {
             <Email />
           </div>
         </HangingRow>
-        <HangingRow rail={<span className="rail-note">GitHub</span>}>
-          <div className="mono" style={{ fontSize: 'var(--text-body)' }}>
-            <a href={site(locale).github}>{site(locale).github.replace(/^https?:\/\//, '')}</a>
-          </div>
-        </HangingRow>
+        {site(locale).github && (
+          <HangingRow rail={<span className="rail-note">GitHub</span>}>
+            <div className="mono" style={{ fontSize: 'var(--text-body)' }}>
+              <a href={site(locale).github!}>
+                {site(locale).github!.replace(/^https?:\/\//, '')}
+              </a>
+            </div>
+          </HangingRow>
+        )}
       </HangingSection>
     </div>
   );

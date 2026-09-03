@@ -48,7 +48,7 @@ export function Shell({
       {/* The machine's own facts sit with the copyright: a colophon is where
           a page says what produced it. */}
       <footer className="colophon mono">
-        {site().copyright}
+        {site().copyright ?? ''}
         <span aria-hidden> · </span>
         <MachineStatus />
       </footer>

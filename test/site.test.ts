@@ -12,18 +12,12 @@ import path from 'node:path';
 // a rule that is a pure function of the file.
 const FILE = path.join(import.meta.dirname, '..', 'content', 'site.yml');
 
-// Fields that are one line whatever the language.
-const REQUIRED = [
-    'name',
-    'subtitle',
-    'copyright',
-    'github',
-    'open_source.name',
-    'open_source.note',
-    'open_source.url',
-];
-
+// Everything the pages may read. All of it is optional: an absent or empty
+// value means that piece is not on the page. What must not happen is a key the
+// site does not know, since that would read as a deliberate omission.
+const TOP = ['name', 'subtitle', 'openers', 'copyright', 'github', 'open_source'];
 const OPENERS = ['posts', 'projects', 'about'];
+const OPEN_SOURCE = ['name', 'note', 'url'];
 const LOCALES = ['zh', 'en'];
 
 // Read without a YAML library. The parser lives in web/node_modules and this
@@ -51,25 +45,40 @@ function read(): Map<string, string> {
     return out;
 }
 
-test('every field the pages read is present and not blank', () => {
-    const doc = read();
-    for (const key of REQUIRED) {
-        assert.ok(doc.has(key), `${key} is missing`);
-        assert.notEqual(doc.get(key), '', `${key} is blank`);
+test('nothing in the file is a key the site does not know', () => {
+    // The one thing that cannot be allowed to pass. Every value is optional,
+    // so a misspelled key would silently mean "this page has none of that"
+    // rather than "you typed it wrong".
+    const keys = [...read().keys()];
+    for (const key of keys) {
+        const [head, second] = key.split('.');
+        assert.ok(TOP.includes(head), `${head} is not something this site has`);
+        if (head === 'openers' && second) {
+            assert.ok(OPENERS.includes(second), `openers.${second} is not a page`);
+        }
+        if (head === 'open_source' && second) {
+            assert.ok(OPEN_SOURCE.includes(second), `open_source.${second} is not a field`);
+        }
     }
 });
 
-test('the reader is checking the same fields these tests are', () => {
-    // Two lists of required fields would drift apart, and the one that drifted
+test('the open-source entry is complete or absent, never half', () => {
+    const doc = read();
+    const present = OPEN_SOURCE.filter((f) =>
+        [...doc.keys()].some((k) => k === `open_source.${f}` || k.startsWith(`open_source.${f}.`)),
+    );
+    if (present.length === 0) return;
+    assert.deepEqual(present.sort(), [...OPEN_SOURCE].sort(),
+        'the homepage entry names some fields but not all of them');
+});
+
+test('the reader knows the same keys these tests do', () => {
+    // Two lists of known keys would drift apart, and the one that drifted
     // would be the one nothing noticed.
     const src = fs.readFileSync(
         path.join(import.meta.dirname, '..', 'web', 'lib', 'site.ts'), 'utf8');
-    for (const key of REQUIRED) {
-        assert.match(
-            src,
-            new RegExp(`'${key.replace('.', '\\.')}'`),
-            `web/lib/site.ts does not require ${key}`,
-        );
+    for (const key of [...TOP, ...OPENERS, ...OPEN_SOURCE]) {
+        assert.match(src, new RegExp(`'${key}'`), `web/lib/site.ts does not know ${key}`);
     }
 });
 
@@ -96,11 +105,10 @@ test('every opener is either one line or one per language, never half', () => {
         const shared = doc.has(`openers.${key}`);
         const perLocale = LOCALES.filter((l) => doc.has(`openers.${key}.${l}`));
 
-        // Absent entirely is allowed: that page has no opening line.
+        // Absent, or present and empty, both mean that page has no opener.
         if (!shared && perLocale.length === 0) continue;
 
         if (shared) {
-            assert.notEqual(doc.get(`openers.${key}`), '', `openers.${key} is blank`);
             assert.deepEqual(perLocale, [], `openers.${key} is both shared and per-language`);
             continue;
         }
@@ -108,8 +116,6 @@ test('every opener is either one line or one per language, never half', () => {
             perLocale, LOCALES,
             `openers.${key} names ${perLocale.join(', ') || 'no language'}, not every one`,
         );
-        for (const l of LOCALES) {
-            assert.notEqual(doc.get(`openers.${key}.${l}`), '', `openers.${key}.${l} is blank`);
-        }
+
     }
 });

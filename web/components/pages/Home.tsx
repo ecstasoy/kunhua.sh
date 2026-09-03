@@ -15,12 +15,16 @@ export function Home({ locale }: { locale: Locale }) {
     <div>
       {/* The opening lines speak in the owner's name and are shared by both
           locales, so they are not translated. */}
-      <p className="serif" style={{ fontSize: 'var(--text-lede)', lineHeight: 1.5, margin: 0 }}>
-        {site(locale).name}
-      </p>
-      <p style={{ fontSize: 'var(--text-body)', lineHeight: 1.72, color: 'var(--soft)', maxWidth: '48ch', margin: '4px 0 6px' }}>
-        {site(locale).subtitle}
-      </p>
+      {site(locale).name && (
+        <p className="serif" style={{ fontSize: 'var(--text-lede)', lineHeight: 1.5, margin: 0 }}>
+          {site(locale).name}
+        </p>
+      )}
+      {site(locale).subtitle && (
+        <p style={{ fontSize: 'var(--text-body)', lineHeight: 1.72, color: 'var(--soft)', maxWidth: '48ch', margin: '4px 0 6px' }}>
+          {site(locale).subtitle}
+        </p>
+      )}
 
       <HangingSection label="Writing">
         {posts.map((p) => (
@@ -43,18 +47,22 @@ export function Home({ locale }: { locale: Locale }) {
         </HangingRow>
       </HangingSection>
 
-      <HangingSection label="Open source">
-        <HangingRow>
-          {/* Shared by both locales, so it says what RIME is rather than what
-              was contributed — the link lands on the merged PRs themselves. */}
-          <div className="item-title">
-            <a href={site(locale).openSource.url}>{site(locale).openSource.name}</a>
-            <span style={{ color: 'var(--soft)', fontWeight: 400 }}>
-              {`: ${site(locale).openSource.note}`}
-            </span>
-          </div>
-        </HangingRow>
-      </HangingSection>
+      {/* The whole section goes when the entry does: a heading with nothing
+          under it is worse than no heading. */}
+      {site(locale).openSource && (
+        <HangingSection label="Open source">
+          <HangingRow>
+            {/* Shared by both locales, so it says what RIME is rather than
+                what was contributed — the link lands on the merged PRs. */}
+            <div className="item-title">
+              <a href={site(locale).openSource!.url}>{site(locale).openSource!.name}</a>
+              <span style={{ color: 'var(--soft)', fontWeight: 400 }}>
+                {`: ${site(locale).openSource!.note}`}
+              </span>
+            </div>
+          </HangingRow>
+        </HangingSection>
+      )}
 
       <HangingSection label="Projects">
         {projects.map((project) => (
