@@ -2,13 +2,14 @@ import { getAllPosts } from '@/lib/posts';
 import { HangingSection, HangingRow } from '@/components/HangingSection';
 import { Untranslated } from '@/components/Untranslated';
 import { DEFAULT_LOCALE, path, type Locale } from '@/lib/locale';
+import { site } from '@/lib/site';
 
 export function PostsIndex({ locale }: { locale: Locale }) {
   const posts = getAllPosts(locale);
   return (
     <div>
       <p className="serif" style={{ fontSize: 'var(--text-lede)', lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
-        你的我的
+        {site().openers.posts}
       </p>
 
       <HangingSection label="Writing">

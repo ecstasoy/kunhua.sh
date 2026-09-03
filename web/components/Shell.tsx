@@ -3,6 +3,7 @@ import { EmailLink } from '@/components/Email';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { MachineStatus } from '@/components/MachineStatus';
 import { path, other, switchLabel, type Locale } from '@/lib/locale';
+import { site } from '@/lib/site';
 
 /**
  * Masthead, footer, and the language switch. The interface itself is the same
@@ -47,7 +48,7 @@ export function Shell({
       {/* The machine's own facts sit with the copyright: a colophon is where
           a page says what produced it. */}
       <footer className="colophon mono">
-        © 2026 Kunhua Huang
+        {site().copyright}
         <span aria-hidden> · </span>
         <MachineStatus />
       </footer>

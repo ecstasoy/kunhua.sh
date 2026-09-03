@@ -1,0 +1,30 @@
+# Copy that speaks for the owner: the one-line openers, the name, the facts.
+#
+# Not interface vocabulary. Navigation labels and section headings are the
+# interface's own words, they are English in both locales by an earlier
+# decision, and they stay in the components.
+#
+# Read at build time, not from the database. It stays in git so a change has a
+# diff and can be reverted, and it stays in the HTML so a crawler that does not
+# run JavaScript and a link preview card can both see it.
+
+name: Kunhua Huang
+subtitle: MSCS @Northeastern University
+
+# One opener per page. The same in both languages: these are the owner's own
+# words rather than something to translate.
+openers:
+  posts: 你的我的
+  projects: 这里那里
+  about: Across the Great Wall we can reach every corner in the world
+
+copyright: © 2026 Kunhua Huang
+
+github: https://github.com/ecstasoy
+
+# The one open-source entry on the homepage. It says what the project is
+# rather than what was contributed; the link lands on the merged pull requests.
+open_source:
+  name: RIME
+  note: an open-source input method engine
+  url: https://github.com/pulls?q=is%3Apr+author%3Aecstasoy+is%3Amerged+org%3Arime

@@ -5,6 +5,7 @@ import { Untranslated } from '@/components/Untranslated';
 import { NowPlaying } from '@/components/NowPlaying';
 import { Topster } from '@/components/Topster';
 import { DEFAULT_LOCALE, path, type Locale } from '@/lib/locale';
+import { site } from '@/lib/site';
 
 export function Home({ locale }: { locale: Locale }) {
   const posts = getAllPosts(locale).slice(0, 3);
@@ -15,10 +16,10 @@ export function Home({ locale }: { locale: Locale }) {
       {/* The opening lines speak in the owner's name and are shared by both
           locales, so they are not translated. */}
       <p className="serif" style={{ fontSize: 'var(--text-lede)', lineHeight: 1.5, margin: 0 }}>
-        Kunhua Huang
+        {site().name}
       </p>
       <p style={{ fontSize: 'var(--text-body)', lineHeight: 1.72, color: 'var(--soft)', maxWidth: '48ch', margin: '4px 0 6px' }}>
-        MSCS @Northeastern University
+        {site().subtitle}
       </p>
 
       <HangingSection label="Writing">
@@ -47,11 +48,9 @@ export function Home({ locale }: { locale: Locale }) {
           {/* Shared by both locales, so it says what RIME is rather than what
               was contributed — the link lands on the merged PRs themselves. */}
           <div className="item-title">
-            <a href="https://github.com/pulls?q=is%3Apr+author%3Aecstasoy+is%3Amerged+org%3Arime">
-              RIME
-            </a>
+            <a href={site().openSource.url}>{site().openSource.name}</a>
             <span style={{ color: 'var(--soft)', fontWeight: 400 }}>
-              : an open-source input method engine
+              {`: ${site().openSource.note}`}
             </span>
           </div>
         </HangingRow>

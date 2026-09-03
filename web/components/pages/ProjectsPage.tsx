@@ -2,6 +2,7 @@ import { getAllProjects, type Project } from '@/lib/projects';
 import { HangingSection, HangingRow } from '@/components/HangingSection';
 import { Untranslated } from '@/components/Untranslated';
 import type { Locale } from '@/lib/locale';
+import { site } from '@/lib/site';
 
 // Name left, stack right, one line spanning both columns — what a resume does,
 // and what a reader scanning a list expects. A tech list will not fit the rail.
@@ -34,7 +35,7 @@ export function ProjectsPage({ locale }: { locale: Locale }) {
   return (
     <div>
       <p className="serif" style={{ fontSize: 'var(--text-lede)', lineHeight: 1.72, maxWidth: '48ch', margin: '0 0 6px' }}>
-        这里那里
+        {site().openers.projects}
       </p>
 
       {projects.map((project) => (
