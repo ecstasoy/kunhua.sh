@@ -9,7 +9,7 @@
 # run JavaScript and a link preview card can both see it.
 
 name: Kunhua Huang
-subtitle: MSCS @Northeastern University
+subtitle: 
 
 # One opener per page. Four things are possible:
 #
@@ -24,27 +24,31 @@ subtitle: MSCS @Northeastern University
 # somebody meant to write something, and a page with a silent gap where its
 # opening line should be looks exactly like a page that never had one.
 openers:
-  # Written in English to begin with: it is what the first email sent from
-  # China said, in 1987. It reads the same on both sides.
+  # Written in English to begin with. It reads the same on both sides.
   about: Across the Great Wall we can reach every corner in the world
 
   posts:
-    zh: 你的我的
-    # TODO(kunhua): 英文版。这两句是你的话，我不代写。
-    # 在填之前英文页显示中文，跟以前一样。
-    en: 你的我的
+    zh: |
+      你的...
+      我的
+    en: |
+      Yours...
+      and mine
   projects:
-    zh: 这里那里
-    # TODO(kunhua): 同上。
-    en: 这里那里
+    zh: |
+      这里...
+      那里
+    en: |
+      Here...
+      and there 
 
 copyright: © 2026 Kunhua Huang
 
 github: https://github.com/ecstasoy
 
-# The one open-source entry on the homepage. It says what the project is
-# rather than what was contributed; the link lands on the merged pull requests.
 open_source:
   name: RIME
-  note: an open-source input method engine
+  note:
+    zh: 一个开源输入法引擎
+    en: an open-source input method engine
   url: https://github.com/pulls?q=is%3Apr+author%3Aecstasoy+is%3Amerged+org%3Arime
