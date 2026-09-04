@@ -12,15 +12,15 @@
      once, so changing the typography meant editing both and noticing if you
      missed one. Colours were already tokens, which is why the dark theme cost
      seven lines; this is the same move for size. */
-  --text-h1: 21px;
-  --text-lede: 17px;
-  --text-title: 14.5px;
-  --text-base: 14px;
-  --text-body: 12.5px;
-  --text-rail: 12px;
-  --text-meta: 11.5px;
-  --text-micro: 11px;
-  --text-nano: 10.5px;
+  --text-h1: 25px;
+  --text-lede: 21px;
+  --text-title: 17px;
+  --text-base: 14.5px;
+  --text-body: 14px;
+  --text-rail: 12.5px;
+  --text-meta: 12px;
+  --text-micro: 11.5px;
+  --text-nano: 11px;
 
   --measure: 700px;
   --rail: 88px;
