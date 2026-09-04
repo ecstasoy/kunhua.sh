@@ -11,16 +11,21 @@
   /* Type scale. Sizes lived in the stylesheet and inline in components at
      once, so changing the typography meant editing both and noticing if you
      missed one. Colours were already tokens, which is why the dark theme cost
-     seven lines; this is the same move for size. */
-  --text-h1: 25px;
-  --text-lede: 21px;
-  --text-title: 17px;
-  --text-base: 14.5px;
-  --text-body: 14px;
-  --text-rail: 12.5px;
-  --text-meta: 12px;
-  --text-micro: 11.5px;
-  --text-nano: 11px;
+     seven lines; this is the same move for size.
+
+     Scaled proportionally rather than by shifting each token to the value of
+     the one above it. Half the steps here were 0.5px apart, so shifting left
+     the labels, the dates and the colophon visually unchanged while the
+     headings grew by four. */
+  --text-h1: 24px;
+  --text-lede: 19.5px;
+  --text-title: 16.5px;
+  --text-base: 16px;
+  --text-body: 14.5px;
+  --text-rail: 14px;
+  --text-meta: 13px;
+  --text-micro: 12.5px;
+  --text-nano: 12px;
 
   --measure: 700px;
   --rail: 88px;
